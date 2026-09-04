@@ -340,7 +340,7 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
   };
 
   return (
-    <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 max-w-[1180px] mx-auto space-y-10">
+    <div className={`min-h-screen py-8 sm:py-12 px-4 sm:px-6 max-w-[1180px] mx-auto space-y-10 main-app-content ${showSlip ? 'print:hidden' : ''}`}>
       {/* 1. HERO & RECRUITMENT BANNER */}
       <motion.section
         variants={framerSectionVariants}
@@ -493,18 +493,7 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
               className="japandi-btn-primary px-6 py-3 font-bold text-sm shadow-md"
             >
               <Printer className="w-4 h-4 mr-2" />
-              <span>Print Official 2-Page Form (A4)</span>
-            </button>
-
-            <button
-              id="btn-submit-another"
-              onClick={() => {
-                setFormSubmitted(false);
-                setSubmittedApplicant(null);
-              }}
-              className="japandi-btn-secondary px-5 py-3 text-xs font-bold"
-            >
-              Submit Another Application
+              <span>Download / Print Official 2-Page Form (A4)</span>
             </button>
 
             {setActiveTab && (
@@ -1526,12 +1515,14 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
 
       {/* 5. PRINTABLE 2-PAGE APPLICATION SLIP (MODAL / PRINT VIEW) */}
       {showSlip && (
-        <RecruitmentApplicationSlipA4
-          applicant={slipApplicant}
-          signatories={recruitmentSignatories}
-          isBlank={isSlipBlank}
-          onClose={() => setShowSlip(false)}
-        />
+        <div id="recruitment-slip-modal-root">
+          <RecruitmentApplicationSlipA4
+            applicant={slipApplicant}
+            signatories={recruitmentSignatories}
+            isBlank={isSlipBlank}
+            onClose={() => setShowSlip(false)}
+          />
+        </div>
       )}
     </div>
   );

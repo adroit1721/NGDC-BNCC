@@ -416,15 +416,18 @@ html {
 }
 
 /* =========================================================================
-   Print Rules: Ensure ONLY the 2-Page Official Form is Printed
+   Print Rules: Ensure ONLY the 2-Page Official Form is Printed (No Blank Pages)
    ========================================================================= */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm;
+    margin: 6mm 8mm;
   }
 
   html, body {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
@@ -433,42 +436,66 @@ html {
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything on the body */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Show only the official recruitment A4 container and its contents */
-  #official-recruitment-a4-document,
-  #official-recruitment-a4-document * {
-    visibility: visible !important;
-  }
-
-  #official-recruitment-a4-document {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 210mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    background: #ffffff !important;
-    box-shadow: none !important;
-    z-index: 999999 !important;
-  }
-
+  /* Hide app navigation, headers, footers, and all interactive controls */
+  .no-print,
   .print-hide,
   .print\:hidden,
   header,
   nav,
   footer,
   aside,
-  button {
+  button,
+  .main-app-content {
     display: none !important;
   }
 
-  .print-page-break {
+  /* Make modal backdrop completely static and non-blocking in print */
+  .recruitment-slip-modal-backdrop {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    backdrop-filter: none !important;
+    z-index: auto !important;
+  }
+
+  /* The printable 2-page document container */
+  #official-recruitment-a4-document {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Page container strictly sized to A4 printable region */
+  .slip-a4-page {
+    position: relative !important;
+    width: 210mm !important;
+    min-height: 284mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    box-sizing: border-box !important;
     page-break-after: always !important;
     break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .slip-a4-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 

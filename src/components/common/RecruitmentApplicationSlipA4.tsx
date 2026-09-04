@@ -1,8 +1,10 @@
-import React, { useRef } from 'react';
-import { Printer, X, Shield, FileText, CheckCircle2 } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Printer, X, FileText, Download, Loader2 } from 'lucide-react';
 import { RecruitmentApplicant, RecruitmentAnnouncementConfig, FormFieldConfig, RecruitmentSignatoriesConfig } from '../../types';
 import { ASSETS } from '../../data/bnccData';
 import { useAdminData } from '../../context/AdminDataContext';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 interface RecruitmentApplicationSlipA4Props {
   applicant?: Partial<RecruitmentApplicant> | null;
@@ -47,12 +49,61 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
 }) => {
   const { recruitmentSignatories: contextSignatories, recruitmentAnnouncement } = useAdminData();
   const printRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const activeAnnouncement = announcement || recruitmentAnnouncement;
   const sig = propSignatories || contextSignatories;
 
+  const appData = applicant || {};
+
+  useEffect(() => {
+    document.body.classList.add('printing-slip-ready');
+    return () => {
+      document.body.classList.remove('printing-slip-ready');
+      document.body.classList.remove('printing-slip');
+    };
+  }, []);
+
+  // Direct PDF file download using html2pdf.js
+  const handleDownloadPdf = async () => {
+    if (!printRef.current) return;
+    setIsGeneratingPdf(true);
+    try {
+      const serial = appData.serialNo || appData.token || (isBlank ? 'Blank' : 'Application');
+      const filename = `BNCC-Recruit-Admission-Form-${serial}.pdf`;
+      const opt = {
+        margin: [6, 8, 6, 8] as [number, number, number, number],
+        filename,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          scrollX: 0,
+          scrollY: 0,
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
+        pagebreak: { mode: ['css', 'legacy'] },
+      };
+
+      await html2pdf().set(opt).from(printRef.current).save();
+    } catch (err) {
+      console.error('Direct PDF download error:', err);
+      // Graceful fallback to print
+      handlePrint();
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const handlePrint = () => {
-    window.print();
+    document.body.classList.add('printing-slip');
+    setTimeout(() => {
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('printing-slip');
+      }, 1000);
+    }, 150);
   };
 
   // Helper to format values or return dotted placeholders
@@ -68,33 +119,52 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
     return current?.toLowerCase() === target.toLowerCase();
   };
 
-  const appData = applicant || {};
-
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex flex-col items-center justify-start p-2 sm:p-6 print:p-0 print:bg-white print:static">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/75 backdrop-blur-sm flex flex-col items-center justify-start p-2 sm:p-6 print:p-0 print:bg-white print:static recruitment-slip-modal-backdrop">
       {/* Floating Action Controls - Hidden during physical print */}
-      <div className="sticky top-3 z-60 mb-4 flex items-center gap-3 print:hidden bg-[#1c1c18]/95 text-white px-5 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20">
+      <div className="sticky top-3 z-60 mb-4 flex flex-wrap items-center justify-center gap-2.5 print:hidden bg-[#1c1c18]/95 text-white px-4 sm:px-6 py-2.5 rounded-2xl shadow-2xl backdrop-blur-md border border-white/20">
         <div className="flex items-center gap-2 pr-3 border-r border-white/20">
           <FileText className="w-5 h-5 text-[#eedc82]" />
-          <span className="font-bold text-sm tracking-wide">
+          <span className="font-bold text-xs sm:text-sm tracking-wide">
             {isBlank ? 'Blank Printable Application Form' : 'Official Recruit Admission Form'}
           </span>
         </div>
 
+        {/* Direct Download Button */}
+        <button
+          id="btn-download-slip"
+          onClick={handleDownloadPdf}
+          disabled={isGeneratingPdf}
+          className="flex items-center gap-2 bg-[#eedc82] hover:bg-[#ffe885] disabled:opacity-60 text-[#1c1c18] font-black px-4 py-2 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+        >
+          {isGeneratingPdf ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Generating PDF...</span>
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              <span>Direct Download PDF</span>
+            </>
+          )}
+        </button>
+
+        {/* System Print Dialog Button */}
         <button
           id="btn-print-slip"
           onClick={handlePrint}
-          className="flex items-center gap-2 bg-[#eedc82] hover:bg-[#ffe885] text-[#1c1c18] font-black px-4 py-2 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer"
+          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold px-3.5 py-2 rounded-xl text-xs sm:text-sm transition-all border border-white/20 active:scale-95 cursor-pointer"
         >
-          <Printer className="w-4 h-4" />
-          <span>Print / Save 2-Page A4 PDF</span>
+          <Printer className="w-4 h-4 text-[#eedc82]" />
+          <span>Print / System Dialog</span>
         </button>
 
         {onClose && (
           <button
             id="btn-close-slip"
             onClick={onClose}
-            className="p-2 text-[#cdc6b3] hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-2 text-[#cdc6b3] hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer ml-1"
             title="Close Preview"
           >
             <X className="w-5 h-5" />
@@ -112,7 +182,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             PAGE 1: PERSONAL & ACADEMIC PARTICULARS (Items 1 - 19)
             ========================================================================= */}
         <div
-          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[10mm] print:rounded-none flex flex-col justify-between"
+          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[8mm_10mm] print:rounded-none flex flex-col justify-between slip-a4-page"
           style={{
             pageBreakAfter: 'always',
             breakAfter: 'page',
@@ -523,7 +593,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             PAGE 2: PLEDGE, GUARDIAN CONSENT & SIGNATORIES
             ========================================================================= */}
         <div
-          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[10mm] print:rounded-none flex flex-col justify-between"
+          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[8mm_10mm] print:rounded-none flex flex-col justify-between slip-a4-page"
           style={{
             pageBreakBefore: 'always',
             breakBefore: 'page',
@@ -551,7 +621,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </p>
 
               {/* Applicant Signature Lines */}
-              <div className="flex items-end justify-between pt-8 px-4">
+              <div className="flex items-end justify-between pt-6 px-4">
                 <div className="space-y-1">
                   <div className="text-[11px] font-medium">
                     Date: <span className="font-mono">{isBlank ? '....................................' : (appData.appliedAt?.split(' ')[0] || new Date().toLocaleDateString('en-GB'))}</span>
@@ -559,7 +629,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                 </div>
 
                 <div className="text-center space-y-1">
-                  <div className="border-t border-black w-56 pt-1 font-bold text-xs">
+                  <div className="border-t-2 border-black w-56 pt-1 font-bold text-xs">
                     Applicant's Signature
                   </div>
                 </div>
@@ -581,7 +651,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </p>
 
               {/* Guardian Signature Lines */}
-              <div className="flex items-end justify-between pt-8 px-4">
+              <div className="flex items-end justify-between pt-6 px-4">
                 <div className="space-y-1">
                   <div className="text-[11px] font-medium">
                     Date: <span className="font-mono">....................................</span>
@@ -589,7 +659,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                 </div>
 
                 <div className="text-center space-y-1">
-                  <div className="border-t border-black w-56 pt-1 font-bold text-xs">
+                  <div className="border-t-2 border-black w-56 pt-1 font-bold text-xs">
                     Guardian's Signature
                   </div>
                 </div>
@@ -598,12 +668,17 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
 
             <div className="border-t-2 border-black my-3" />
 
-            {/* 3-COLUMN OFFICIAL SIGNATORIES - With uploaded signature pictures */}
+            {/* 3-COLUMN OFFICIAL SIGNATORIES - Precisely aligned horizontally across all 3 columns */}
             <div className="pt-1">
-              <div className="grid grid-cols-3 gap-3 text-center text-[11px] leading-snug">
+              <div className="grid grid-cols-3 gap-3 text-center text-[11px] leading-snug items-start">
                 {/* Column 1: Signature of Form Provider */}
-                <div className="flex flex-col justify-end items-center h-36 pb-1">
-                  <div className="border-t border-black w-full pt-1.5 font-bold text-black">
+                <div className="flex flex-col items-center w-full">
+                  <div className="h-14 flex items-end justify-center w-full pb-1">
+                    <span className="text-[10px] text-gray-400 select-none">
+                      {isBlank ? '' : '(Provider Signature)'}
+                    </span>
+                  </div>
+                  <div className="border-t-2 border-black w-full pt-1.5 font-bold text-black text-xs">
                     {sig.formProviderTitle || 'Signature of Form Provider:'}
                   </div>
                   <div className="text-[10px] text-gray-700 mt-1">
@@ -611,55 +686,52 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   </div>
                 </div>
 
-                {/* Column 2: Countersigned Authority (Platoon Commander) */}
-                <div className="flex flex-col justify-end items-center h-36 pb-1 border-x border-gray-200 px-2">
-                  {/* Uploaded Platoon Commander Signature Image if available */}
-                  {sig.countersignedSignatureUrl ? (
-                    <div className="h-12 w-full flex items-center justify-center mb-1">
+                {/* Column 2: Countersigned Authority (PUO / Platoon Commander) */}
+                <div className="flex flex-col items-center w-full border-x border-gray-200 px-2">
+                  <div className="h-14 flex items-end justify-center w-full pb-1">
+                    {sig.countersignedSignatureUrl ? (
                       <img
                         src={sig.countersignedSignatureUrl}
                         alt="Countersigned Authority Signature"
                         className="max-h-12 max-w-[130px] object-contain"
                         referrerPolicy="no-referrer"
                       />
-                    </div>
-                  ) : (
-                    <div className="h-8" />
-                  )}
-                  <div className="border-t border-black w-full pt-1 text-black">
+                    ) : (
+                      <div className="h-6" />
+                    )}
+                  </div>
+                  <div className="border-t-2 border-black w-full pt-1 text-black">
                     <span className="font-black block uppercase text-[10.5px] mb-0.5">Countersigned:</span>
                     <span className="font-bold block text-xs">{sig.countersignedName || 'PUO Md. Abdul Matin'}</span>
-                    <span className="block font-mono text-[10px]">{sig.countersignedPNo || 'P-8193'}</span>
-                    <span className="block text-[10px]">{sig.countersignedBattalion || '31 BNCC Battalion'}</span>
-                    <span className="block text-[10px]">{sig.countersignedRegiment || 'Mahasthan Regiment'}</span>
+                    <span className="block font-mono text-[10px]">{sig.countersignedPNo ? `P-No: ${sig.countersignedPNo}` : 'P-No: P-8193'}</span>
                     <span className="font-semibold block text-[10px]">{sig.countersignedTitle || 'Platoon Commander'}</span>
+                    <span className="block text-[10px]">{sig.countersignedBattalion || '31 BNCC Battalion'}, {sig.countersignedRegiment || 'Mahasthan Regiment'}</span>
                     <span className="block text-[9px] text-gray-700">{sig.countersignedInstitution || 'New Govt. Degree College, Rajshahi'}</span>
                   </div>
                 </div>
 
                 {/* Column 3: Signature of Platoon Senior Cadet */}
-                <div className="flex flex-col justify-end items-center h-36 pb-1">
-                  {/* Uploaded Senior Cadet Signature Image if available */}
-                  {sig.seniorCadetSignatureUrl ? (
-                    <div className="h-12 w-full flex items-center justify-center mb-1">
+                <div className="flex flex-col items-center w-full">
+                  <div className="h-14 flex items-end justify-center w-full pb-1">
+                    {sig.seniorCadetSignatureUrl ? (
                       <img
                         src={sig.seniorCadetSignatureUrl}
                         alt="Platoon Senior Cadet Signature"
                         className="max-h-12 max-w-[130px] object-contain"
                         referrerPolicy="no-referrer"
                       />
-                    </div>
-                  ) : (
-                    <div className="h-8" />
-                  )}
-                  <div className="border-t border-black w-full pt-1 text-black">
-                    <span className="font-black block uppercase text-[10px] mb-0.5 leading-tight">
+                    ) : (
+                      <div className="h-6" />
+                    )}
+                  </div>
+                  <div className="border-t-2 border-black w-full pt-1 text-black">
+                    <span className="font-black block uppercase text-[10.5px] mb-0.5 leading-tight">
                       Signature of Platoon Senior Cadet:
                     </span>
-                    <span className="font-bold block text-xs mt-0.5">{sig.seniorCadetRankAndName || 'Cadet Sergeant Touhid'}</span>
-                    {sig.seniorCadetNo ? <span className="block font-mono text-[10px]">{sig.seniorCadetNo}</span> : null}
-                    <span className="block text-[10px]">{sig.seniorCadetBattalion || '31 BNCC Battalion'}</span>
-                    <span className="block text-[10px]">{sig.seniorCadetRegiment || 'Mahasthan Regiment'}</span>
+                    <span className="font-bold block text-xs">{sig.seniorCadetRankAndName || 'Cadet Sergeant Touhid'}</span>
+                    <span className="block font-mono text-[10px]">{sig.seniorCadetNo ? `Cadet No: ${sig.seniorCadetNo}` : 'Cadet No: 2210...'}</span>
+                    <span className="font-semibold block text-[10px]">Platoon Senior Under Officer / Cadet</span>
+                    <span className="block text-[10px]">{sig.seniorCadetBattalion || '31 BNCC Battalion'}, {sig.seniorCadetRegiment || 'Mahasthan Regiment'}</span>
                     <span className="block text-[9px] text-gray-700">{sig.seniorCadetInstitution || 'New Govt. Degree College, Rajshahi'}</span>
                   </div>
                 </div>
