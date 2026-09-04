@@ -18,6 +18,7 @@ import { MemoriesView } from './components/MemoriesView';
 import { CadetsCornerView } from './components/CadetsCornerView';
 import { HonorBoardView } from './components/HonorBoardView';
 import { ContactView } from './components/ContactView';
+import { RecruitmentView } from './components/RecruitmentView';
 import { TopographicBackground } from './components/TopographicBackground';
 import { AdminView } from './components/admin/AdminView';
 import {
@@ -142,7 +143,10 @@ export default function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenJoinModal={() => setIsJoinModalOpen(true)}
+        onOpenJoinModal={() => {
+          setActiveTab('recruitment');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
       {/* Main Content Area with Page Motion Animation */}
@@ -167,7 +171,16 @@ export default function App() {
             )}
 
             {activeTab === 'about' && (
-              <AboutView onOpenJoinModal={() => setIsJoinModalOpen(true)} />
+              <AboutView
+                onOpenJoinModal={() => {
+                  setActiveTab('recruitment');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
+            )}
+
+            {activeTab === 'recruitment' && (
+              <RecruitmentView setActiveTab={setActiveTab} />
             )}
 
             {activeTab === 'training' && <TrainingEventsView />}

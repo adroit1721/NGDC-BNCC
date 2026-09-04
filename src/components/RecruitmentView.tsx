@@ -1,0 +1,1280 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  Shield,
+  Printer,
+  FileText,
+  CheckCircle2,
+  Calendar,
+  MapPin,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  Award,
+  AlertCircle,
+  Upload,
+  ArrowRight,
+  Search,
+  Check,
+  Building2,
+  BookOpen
+} from 'lucide-react';
+import { useAdminData } from '../context/AdminDataContext';
+import { RecruitmentFormState, RecruitmentApplicant, ApplicantAddress, ApplicantQualification, TabType } from '../types';
+import { RecruitmentApplicationSlipA4 } from './common/RecruitmentApplicationSlipA4';
+import { ASSETS } from '../data/bnccData';
+import { framerSectionVariants, framerPopItemVariants, scrollViewportConfig } from '../utils/motionVariants';
+
+interface RecruitmentViewProps {
+  setActiveTab?: (tab: TabType) => void;
+}
+
+export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }) => {
+  const {
+    recruitmentAnnouncement,
+    recruitmentConfig,
+    addRecruitmentApplicant,
+    recruitmentApplicants,
+    recruitmentSignatories,
+  } = useAdminData();
+
+  // Printable slip states
+  const [showSlip, setShowSlip] = useState(false);
+  const [slipApplicant, setSlipApplicant] = useState<RecruitmentApplicant | null>(null);
+  const [isSlipBlank, setIsSlipBlank] = useState(false);
+
+  // Status check modal/drawer state
+  const [showStatusSearch, setShowStatusSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchedApplicant, setSearchedApplicant] = useState<RecruitmentApplicant | null>(null);
+  const [searchSubmitted, setSearchSubmitted] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState<RecruitmentFormState>({
+    fullName: '',
+    email: '',
+    phone: '',
+    collegeRoll: '',
+    department: 'HSC (Science)',
+    session: '2024-2025',
+    heightFeet: '5',
+    heightInches: '8',
+    weightKg: '62',
+    bloodGroup: 'B+',
+    reason: '',
+    nameBangla: '',
+    nameEnglish: '',
+    fatherNameBangla: '',
+    fatherNameEnglish: '',
+    motherNameBangla: '',
+    motherNameEnglish: '',
+    gender: 'Male',
+    studentClass: '11th',
+    dateOfBirth: '',
+    religion: 'Islam',
+    presentAddress: { village: '', post: '', upazila: '', district: 'Rajshahi' },
+    permanentAddress: { village: '', post: '', upazila: '', district: 'Rajshahi' },
+    phoneSelf: '',
+    phoneGuardian: '',
+    qualifications: [
+      { examName: 'SSC', divisionOrGroup: 'Science', passingYear: '2024', gpa: '5.00', board: 'Rajshahi' },
+      { examName: 'HSC', divisionOrGroup: '', passingYear: '', gpa: '', board: '' },
+    ],
+    chestNormal: '32',
+    chestExpanded: '34',
+    additionalSkills: '',
+    pledgeAccepted: false,
+    guardianConsentAccepted: false,
+  });
+
+  const [sameAsPresent, setSameAsPresent] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [submittedApplicant, setSubmittedApplicant] = useState<RecruitmentApplicant | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isWindowActive = recruitmentAnnouncement?.isActive !== false;
+
+  // Handle Photo Upload
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Photo size should be less than 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setAvatarPreview(result);
+        setFormData((prev) => ({ ...prev, avatarUrl: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Sync permanent address when checkbox is toggled
+  const handleSameAddressToggle = (checked: boolean) => {
+    setSameAsPresent(checked);
+    if (checked && formData.presentAddress) {
+      setFormData((prev) => ({
+        ...prev,
+        permanentAddress: { ...prev.presentAddress! },
+      }));
+    }
+  };
+
+  // Handle Qualification changes
+  const handleQualificationChange = (index: number, field: keyof ApplicantQualification, value: string) => {
+    setFormData((prev) => {
+      const quals = [...(prev.qualifications || [])];
+      if (!quals[index]) {
+        quals[index] = { examName: index === 0 ? 'SSC' : 'HSC', divisionOrGroup: '', passingYear: '', gpa: '', board: '' };
+      }
+      quals[index] = { ...quals[index], [field]: value };
+      return { ...prev, qualifications: quals };
+    });
+  };
+
+  // Form Submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    // Form Validations
+    if (!formData.nameEnglish?.trim() && !formData.fullName?.trim()) {
+      setErrorMsg('Please enter applicant name in English (Capital letters).');
+      return;
+    }
+    if (!formData.phoneSelf?.trim() && !formData.phone?.trim()) {
+      setErrorMsg('Please enter applicant mobile number.');
+      return;
+    }
+    if (!formData.collegeRoll?.trim()) {
+      setErrorMsg('Please enter college roll number.');
+      return;
+    }
+    if (!formData.pledgeAccepted) {
+      setErrorMsg('You must agree to the BNCC Service Pledge (Section 20).');
+      return;
+    }
+    if (!formData.guardianConsentAccepted) {
+      setErrorMsg('Guardian consent confirmation is required (Section 21).');
+      return;
+    }
+
+    const year = new Date().getFullYear();
+    const tokenNo = `NGDC-REC-${year}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const effectiveName = formData.nameEnglish?.trim() || formData.fullName.trim();
+    const effectivePhone = formData.phoneSelf?.trim() || formData.phone.trim();
+
+    const newApplicantPayload: Omit<RecruitmentApplicant, 'id' | 'token' | 'appliedAt' | 'status'> = {
+      fullName: effectiveName,
+      email: formData.email || '',
+      phone: effectivePhone,
+      collegeRoll: formData.collegeRoll,
+      department: formData.department,
+      session: formData.session,
+      heightFeet: formData.heightFeet,
+      heightInches: formData.heightInches,
+      weightKg: formData.weightKg,
+      bloodGroup: formData.bloodGroup,
+      reason: formData.additionalSkills || formData.reason || 'Desire to serve nation through BNCC',
+      avatarUrl: avatarPreview || undefined,
+
+      // Detailed official fields
+      serialNo: tokenNo,
+      nameBangla: formData.nameBangla,
+      nameEnglish: formData.nameEnglish,
+      fatherNameBangla: formData.fatherNameBangla,
+      fatherNameEnglish: formData.fatherNameEnglish,
+      motherNameBangla: formData.motherNameBangla,
+      motherNameEnglish: formData.motherNameEnglish,
+      gender: formData.gender,
+      studentClass: formData.studentClass,
+      dateOfBirth: formData.dateOfBirth,
+      religion: formData.religion,
+      presentAddress: formData.presentAddress,
+      permanentAddress: formData.permanentAddress,
+      phoneSelf: effectivePhone,
+      phoneGuardian: formData.phoneGuardian,
+      qualifications: formData.qualifications,
+      chestNormal: formData.chestNormal,
+      chestExpanded: formData.chestExpanded,
+      additionalSkills: formData.additionalSkills,
+      pledgeAccepted: formData.pledgeAccepted,
+      guardianConsentAccepted: formData.guardianConsentAccepted,
+    };
+
+    const token = addRecruitmentApplicant(newApplicantPayload);
+    const assignedToken = token || tokenNo;
+
+    const completeApplicant: RecruitmentApplicant = {
+      id: `app-${Date.now()}`,
+      ...newApplicantPayload,
+      token: assignedToken,
+      serialNo: assignedToken,
+      status: 'Pending',
+      appliedAt: new Date().toLocaleString(),
+    };
+
+    setSubmittedApplicant(completeApplicant);
+    setFormSubmitted(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Search Application Status
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchSubmitted(true);
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      setSearchedApplicant(null);
+      return;
+    }
+    const found = recruitmentApplicants.find(
+      (a) =>
+        a.token?.toLowerCase() === q ||
+        a.serialNo?.toLowerCase() === q ||
+        a.collegeRoll?.toLowerCase() === q ||
+        a.phone?.toLowerCase().includes(q) ||
+        a.fullName?.toLowerCase().includes(q)
+    );
+    setSearchedApplicant(found || null);
+  };
+
+  return (
+    <div className="min-h-screen py-8 sm:py-12 px-4 sm:px-6 max-w-[1180px] mx-auto space-y-10">
+      {/* 1. HERO & RECRUITMENT BANNER */}
+      <motion.section
+        variants={framerSectionVariants}
+        initial="hidden"
+        animate="visible"
+        className="japandi-card bg-[#fcf9f3] dark:bg-[#1b1a17] border border-[#cdc6b3]/70 dark:border-[#38342c] p-6 sm:p-10 rounded-3xl relative overflow-hidden shadow-xs"
+      >
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative z-10">
+          <div className="space-y-3 text-center md:text-left flex-1">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#eedc82]/40 text-[#6b5e10] dark:text-[#eedc82] text-xs font-bold uppercase tracking-wider border border-[#eedc82]/60">
+              <Shield className="w-4 h-4" />
+              <span>
+                {recruitmentAnnouncement?.batch || recruitmentConfig?.batchName || 'Batch 24'} • Army Wing
+              </span>
+            </div>
+
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-[#1c1c18] dark:text-[#fcfbf7] tracking-tight">
+              {recruitmentAnnouncement?.title || 'Cadet Recruitment Application'}
+            </h1>
+
+            <p className="text-sm sm:text-base text-[#4a4738] dark:text-[#aca596] max-w-2xl leading-relaxed">
+              {recruitmentAnnouncement?.description ||
+                'Join the prestigious 31 BNCC Battalion, Mahasthan Regiment at New Govt. Degree College, Rajshahi. Complete your application online, print the official 2-page hardcopy format, and submit it to Platoon Headquarters.'}
+            </p>
+
+            {/* Event Key Facts */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#f6f3ed] dark:bg-[#25231c] border border-[#cdc6b3]/40 dark:border-[#38342c]">
+                <Clock className="w-4 h-4 text-[#6b5e10] dark:text-[#eedc82] shrink-0" />
+                <div>
+                  <span className="text-[10px] text-[#7c7767] dark:text-[#aca596] block font-medium">Application Deadline</span>
+                  <span className="font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+                    {recruitmentAnnouncement?.deadline || '15 October 2026'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#f6f3ed] dark:bg-[#25231c] border border-[#cdc6b3]/40 dark:border-[#38342c]">
+                <MapPin className="w-4 h-4 text-[#6b5e10] dark:text-[#eedc82] shrink-0" />
+                <div>
+                  <span className="text-[10px] text-[#7c7767] dark:text-[#aca596] block font-medium">Physical Test & Submission</span>
+                  <span className="font-bold text-[#1c1c18] dark:text-[#fcfbf7] truncate">
+                    {recruitmentAnnouncement?.venue || 'Platoon HQ Room 123, NGDC'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#f6f3ed] dark:bg-[#25231c] border border-[#cdc6b3]/40 dark:border-[#38342c]">
+                <Building2 className="w-4 h-4 text-[#6b5e10] dark:text-[#eedc82] shrink-0" />
+                <div>
+                  <span className="text-[10px] text-[#7c7767] dark:text-[#aca596] block font-medium">Countersigned Authority</span>
+                  <span className="font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+                    {recruitmentSignatories?.countersignedTitle || 'Platoon Commander'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Platoon & College Emblems */}
+          <div className="flex items-center gap-3 shrink-0 p-3 bg-white dark:bg-[#25231c] rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] shadow-xs">
+            <img src={ASSETS.bnccLogo} alt="BNCC" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
+            <div className="h-10 w-px bg-gray-300 dark:bg-gray-700" />
+            <img src={ASSETS.ngdcLogo} alt="NGDC" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
+          </div>
+        </div>
+
+        {/* Action Buttons Header */}
+        <div className="mt-6 pt-5 border-t border-[#cdc6b3]/50 dark:border-[#38342c] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              id="btn-print-blank-form-hero"
+              onClick={() => {
+                setIsSlipBlank(true);
+                setSlipApplicant(null);
+                setShowSlip(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#f0eee8] hover:bg-[#ebe8e2] dark:bg-[#25231c] dark:hover:bg-[#322f27] text-[#1c1c18] dark:text-[#fcfbf7] font-bold text-xs sm:text-sm border border-[#cdc6b3] dark:border-[#423e35] transition-all cursor-pointer active:scale-95 shadow-2xs"
+            >
+              <Printer className="w-4 h-4 text-[#6b5e10] dark:text-[#eedc82]" />
+              <span>Print Blank Form (2-Page A4)</span>
+            </button>
+
+            <button
+              id="btn-check-application-status"
+              onClick={() => setShowStatusSearch(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#f0eee8] hover:bg-[#ebe8e2] dark:bg-[#25231c] dark:hover:bg-[#322f27] text-[#1c1c18] dark:text-[#fcfbf7] font-bold text-xs sm:text-sm border border-[#cdc6b3] dark:border-[#423e35] transition-all cursor-pointer active:scale-95 shadow-2xs"
+            >
+              <Search className="w-4 h-4 text-[#6b5e10] dark:text-[#eedc82]" />
+              <span>Check Application Status</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="flex h-2.5 w-2.5 relative">
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isWindowActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isWindowActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+            </span>
+            <span className="text-xs font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+              {isWindowActive ? 'Enrolment Window Active' : 'Enrolment Window Closed'}
+            </span>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* 2. SUCCESS STATE (IF JUST SUBMITTED) */}
+      {formSubmitted && submittedApplicant && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="japandi-card bg-emerald-50/80 dark:bg-emerald-950/30 border-2 border-emerald-500/60 p-6 sm:p-8 rounded-3xl space-y-5"
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 shadow-md">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-emerald-900 dark:text-emerald-200">
+                Application Registered Successfully!
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-300/80">
+                Your application has been registered with Serial No:{' '}
+                <span className="font-mono font-bold text-black dark:text-white px-2 py-0.5 bg-white/70 dark:bg-black/40 rounded border border-emerald-300 dark:border-emerald-700">
+                  {submittedApplicant.serialNo || submittedApplicant.token}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white/80 dark:bg-[#1e1d19]/80 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800 text-xs text-[#1c1c18] dark:text-[#fcfbf7] space-y-2">
+            <span className="font-bold uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82] block">
+              Next Mandatory Steps for Submission:
+            </span>
+            <ol className="list-decimal list-inside space-y-1 text-gray-700 dark:text-gray-300 leading-relaxed">
+              <li>Click <strong>"Print Official 2-Page Form"</strong> below to print your filled application form on A4 paper.</li>
+              <li>Affix candidate signature on Section 20 and guardian signature on Section 21.</li>
+              <li>Attach photocopy of College ID Card / Admission slip and SSC/HSC marksheets.</li>
+              <li>Submit the physical form directly to the <strong>BNCC Platoon HQ (Room 123)</strong> before the deadline.</li>
+            </ol>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              id="btn-print-submitted-slip"
+              onClick={() => {
+                setSlipApplicant(submittedApplicant);
+                setIsSlipBlank(false);
+                setShowSlip(true);
+              }}
+              className="japandi-btn-primary px-6 py-3 font-bold text-sm shadow-md"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              <span>Print Official 2-Page Form (A4)</span>
+            </button>
+
+            <button
+              id="btn-submit-another"
+              onClick={() => {
+                setFormSubmitted(false);
+                setSubmittedApplicant(null);
+              }}
+              className="japandi-btn-secondary px-5 py-3 text-xs font-bold"
+            >
+              Submit Another Application
+            </button>
+
+            {setActiveTab && (
+              <button
+                onClick={() => setActiveTab('home')}
+                className="text-xs text-[#7c7767] hover:underline px-3 py-2"
+              >
+                Return to Home
+              </button>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* 3. MAIN FORM */}
+      {!formSubmitted && (
+        <motion.div
+          variants={framerSectionVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={scrollViewportConfig}
+          className="japandi-card bg-[#fcf9f3] dark:bg-[#1b1a17] border border-[#cdc6b3]/70 dark:border-[#38342c] p-6 sm:p-10 rounded-3xl shadow-sm space-y-8"
+        >
+          <div className="border-b border-[#cdc6b3]/60 dark:border-[#38342c] pb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+                Recruit Admission Form
+              </h2>
+              <p className="text-xs text-[#695c4e] dark:text-[#aca596] mt-0.5">
+                Fill up all personal, academic, and physical details accurately as per college records.
+              </p>
+            </div>
+            <span className="text-[11px] font-bold text-[#6b5e10] dark:text-[#eedc82] bg-[#eedc82]/30 px-3 py-1 rounded-full border border-[#eedc82]/50">
+              Official Platoon Standard
+            </span>
+          </div>
+
+          {errorMsg && (
+            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-8 text-xs text-[#1c1c18] dark:text-[#fcfbf7]">
+            {/* Top Row: Photo Upload Box & Name */}
+            <div className="bg-[#f6f3ed] dark:bg-[#25231c] p-5 sm:p-6 rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] flex flex-col md:flex-row items-center md:items-start gap-6">
+              {/* Photo Box */}
+              <div className="w-32 h-36 border-2 border-dashed border-[#7c7767] dark:border-[#695c4e] rounded-xl overflow-hidden bg-white dark:bg-[#1b1a17] flex flex-col items-center justify-center p-2 text-center relative shrink-0 group">
+                {avatarPreview ? (
+                  <>
+                    <img
+                      src={avatarPreview}
+                      alt="Applicant Photo"
+                      className="w-full h-full object-cover rounded-lg"
+                      referrerPolicy="no-referrer"
+                    />
+                    <label
+                      htmlFor="photo-upload-input"
+                      className="absolute inset-0 bg-black/60 text-white text-[10px] font-bold opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity"
+                    >
+                      <Upload className="w-4 h-4 mb-1" />
+                      <span>Change Photo</span>
+                    </label>
+                  </>
+                ) : (
+                  <label
+                    htmlFor="photo-upload-input"
+                    className="flex flex-col items-center justify-center w-full h-full cursor-pointer hover:bg-gray-50 dark:hover:bg-[#201e19] transition-colors p-1"
+                  >
+                    <User className="w-8 h-8 text-gray-400 mb-1" />
+                    <span className="font-bold text-[11px] leading-tight">Attach Photo</span>
+                    <span className="text-[9px] text-gray-400 mt-0.5">300 x 300 px</span>
+                  </label>
+                )}
+                <input
+                  id="photo-upload-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Identity Details */}
+              <div className="flex-1 space-y-4 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-bold block mb-1">
+                      1. Applicant's Name (In Bangla):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.nameBangla || ''}
+                      onChange={(e) => setFormData({ ...formData, nameBangla: e.target.value })}
+                      placeholder="আবেদনকারীর পুরো নাম (বাংলায়)"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1">
+                      1. Applicant's Name (In English Capital): *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.nameEnglish || ''}
+                      onChange={(e) => setFormData({ ...formData, nameEnglish: e.target.value.toUpperCase(), fullName: e.target.value.toUpperCase() })}
+                      placeholder="FULL NAME IN CAPITAL LETTERS"
+                      className="japandi-input w-full font-mono uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-bold block mb-1">
+                      2. Father's Name (In Bangla):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fatherNameBangla || ''}
+                      onChange={(e) => setFormData({ ...formData, fatherNameBangla: e.target.value })}
+                      placeholder="পিতার নাম (বাংলায়)"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1">
+                      2. Father's Name (In English Capital):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.fatherNameEnglish || ''}
+                      onChange={(e) => setFormData({ ...formData, fatherNameEnglish: e.target.value.toUpperCase() })}
+                      placeholder="FATHER'S NAME IN CAPITAL LETTERS"
+                      className="japandi-input w-full font-mono uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="font-bold block mb-1">
+                      3. Mother's Name (In Bangla):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.motherNameBangla || ''}
+                      onChange={(e) => setFormData({ ...formData, motherNameBangla: e.target.value })}
+                      placeholder="মাতার নাম (বাংলায়)"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold block mb-1">
+                      3. Mother's Name (In English Capital):
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.motherNameEnglish || ''}
+                      onChange={(e) => setFormData({ ...formData, motherNameEnglish: e.target.value.toUpperCase() })}
+                      placeholder="MOTHER'S NAME IN CAPITAL LETTERS"
+                      className="japandi-input w-full font-mono uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Academic & Personal Categorization (Items 4 - 10) */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2">
+                Academic & Personal Information
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {/* 4. Gender */}
+                <div>
+                  <label className="font-bold block mb-1">4. Gender: *</label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    className="japandi-input w-full"
+                  >
+                    <option value="Male">Male (পুরুষ)</option>
+                    <option value="Female">Female (মহিলা)</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                {/* 5. Class */}
+                <div>
+                  <label className="font-bold block mb-1">5. Class: *</label>
+                  <select
+                    value={formData.studentClass}
+                    onChange={(e) => setFormData({ ...formData, studentClass: e.target.value })}
+                    className="japandi-input w-full"
+                  >
+                    <option value="11th">11th (একাদশ)</option>
+                    <option value="12th">12th (দ্বাদশ)</option>
+                    <option value="Honours 1st year">Honours 1st year (স্নাতক ১ম বর্ষ)</option>
+                    <option value="Honours 2nd year">Honours 2nd year (স্নাতক ২য় বর্ষ)</option>
+                  </select>
+                </div>
+
+                {/* 6. Department / Subject */}
+                <div>
+                  <label className="font-bold block mb-1">6. Department / Subject: *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    placeholder="e.g. Science / Physics / Management"
+                    className="japandi-input w-full"
+                  />
+                </div>
+
+                {/* 7. Roll No */}
+                <div>
+                  <label className="font-bold block mb-1">7. Roll No: *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.collegeRoll}
+                    onChange={(e) => setFormData({ ...formData, collegeRoll: e.target.value })}
+                    placeholder="e.g. 24-SCI-0142"
+                    className="japandi-input w-full font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* 8. Academic Session */}
+                <div>
+                  <label className="font-bold block mb-1">8. Academic Session: *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.session}
+                    onChange={(e) => setFormData({ ...formData, session: e.target.value })}
+                    placeholder="e.g. 2024-2025"
+                    className="japandi-input w-full font-mono"
+                  />
+                </div>
+
+                {/* 9. Date of Birth */}
+                <div>
+                  <label className="font-bold block mb-1">9. Date of Birth: *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.dateOfBirth || ''}
+                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                    className="japandi-input w-full"
+                  />
+                </div>
+
+                {/* 10. Religion */}
+                <div>
+                  <label className="font-bold block mb-1">10. Religion: *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.religion || ''}
+                    onChange={(e) => setFormData({ ...formData, religion: e.target.value })}
+                    placeholder="e.g. Islam / Hinduism / Buddhism / Christianity"
+                    className="japandi-input w-full"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Address Particulars (Items 11 & 12) */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2">
+                Residential Addresses
+              </h3>
+
+              {/* 11. Present Address */}
+              <div className="p-4 rounded-2xl bg-[#f6f3ed] dark:bg-[#25231c] border border-[#cdc6b3]/40 dark:border-[#38342c] space-y-3">
+                <span className="font-bold text-xs block text-[#6b5e10] dark:text-[#eedc82]">
+                  11. Present Address (বর্তমান ঠিকানা):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Village / Area</label>
+                    <input
+                      type="text"
+                      value={formData.presentAddress?.village || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        presentAddress: { ...formData.presentAddress!, village: e.target.value },
+                        ...(sameAsPresent ? { permanentAddress: { ...formData.permanentAddress!, village: e.target.value } } : {}),
+                      })}
+                      placeholder="Village / Ward / Road"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Post Office</label>
+                    <input
+                      type="text"
+                      value={formData.presentAddress?.post || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        presentAddress: { ...formData.presentAddress!, post: e.target.value },
+                        ...(sameAsPresent ? { permanentAddress: { ...formData.permanentAddress!, post: e.target.value } } : {}),
+                      })}
+                      placeholder="Post Office"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Upazila / Thana</label>
+                    <input
+                      type="text"
+                      value={formData.presentAddress?.upazila || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        presentAddress: { ...formData.presentAddress!, upazila: e.target.value },
+                        ...(sameAsPresent ? { permanentAddress: { ...formData.permanentAddress!, upazila: e.target.value } } : {}),
+                      })}
+                      placeholder="Upazila"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">District</label>
+                    <input
+                      type="text"
+                      value={formData.presentAddress?.district || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        presentAddress: { ...formData.presentAddress!, district: e.target.value },
+                        ...(sameAsPresent ? { permanentAddress: { ...formData.permanentAddress!, district: e.target.value } } : {}),
+                      })}
+                      placeholder="District"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 12. Permanent Address */}
+              <div className="p-4 rounded-2xl bg-[#f6f3ed] dark:bg-[#25231c] border border-[#cdc6b3]/40 dark:border-[#38342c] space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#6b5e10] dark:text-[#eedc82]">
+                    12. Permanent Address (স্থায়ী ঠিকানা):
+                  </span>
+                  <label className="flex items-center gap-2 cursor-pointer text-[11px] text-gray-600 dark:text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={sameAsPresent}
+                      onChange={(e) => handleSameAddressToggle(e.target.checked)}
+                      className="rounded accent-[#6b5e10]"
+                    />
+                    <span>Same as Present Address</span>
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Village / Area</label>
+                    <input
+                      type="text"
+                      value={formData.permanentAddress?.village || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        permanentAddress: { ...formData.permanentAddress!, village: e.target.value },
+                      })}
+                      placeholder="Village / Ward"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Post Office</label>
+                    <input
+                      type="text"
+                      value={formData.permanentAddress?.post || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        permanentAddress: { ...formData.permanentAddress!, post: e.target.value },
+                      })}
+                      placeholder="Post Office"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">Upazila / Thana</label>
+                    <input
+                      type="text"
+                      value={formData.permanentAddress?.upazila || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        permanentAddress: { ...formData.permanentAddress!, upazila: e.target.value },
+                      })}
+                      placeholder="Upazila"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-600 dark:text-gray-400 block mb-1">District</label>
+                    <input
+                      type="text"
+                      value={formData.permanentAddress?.district || ''}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        permanentAddress: { ...formData.permanentAddress!, district: e.target.value },
+                      })}
+                      placeholder="District"
+                      className="japandi-input w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 13. Contact Particulars */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2">
+                13. Contact Numbers & Email
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="font-bold block mb-1">Mobile No. (Self): *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={formData.phoneSelf || formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phoneSelf: e.target.value, phone: e.target.value })}
+                    placeholder="01XXXXXXXXX"
+                    className="japandi-input w-full font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold block mb-1">Mobile No. (Guardian):</label>
+                  <input
+                    type="tel"
+                    value={formData.phoneGuardian || ''}
+                    onChange={(e) => setFormData({ ...formData, phoneGuardian: e.target.value })}
+                    placeholder="01XXXXXXXXX"
+                    className="japandi-input w-full font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold block mb-1">Email Address (if any):</label>
+                  <input
+                    type="email"
+                    value={formData.email || ''}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="applicant@gmail.com"
+                    className="japandi-input w-full font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 14. Educational Qualifications (Table) */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2">
+                14. Educational Qualifications (শিক্ষাগত যোগ্যতা)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border border-[#cdc6b3]/60 dark:border-[#38342c] rounded-xl overflow-hidden">
+                  <thead className="bg-[#f0eee8] dark:bg-[#25231c] text-[#1c1c18] dark:text-[#fcfbf7] font-bold">
+                    <tr>
+                      <th className="p-2.5 border-b border-[#cdc6b3]/60 dark:border-[#38342c]">Exam Name</th>
+                      <th className="p-2.5 border-b border-[#cdc6b3]/60 dark:border-[#38342c]">Division / Group</th>
+                      <th className="p-2.5 border-b border-[#cdc6b3]/60 dark:border-[#38342c]">Passing Year</th>
+                      <th className="p-2.5 border-b border-[#cdc6b3]/60 dark:border-[#38342c]">GPA Obtained</th>
+                      <th className="p-2.5 border-b border-[#cdc6b3]/60 dark:border-[#38342c]">Board</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#cdc6b3]/40 dark:divide-[#38342c]">
+                    {/* Row 1: SSC */}
+                    <tr>
+                      <td className="p-2.5 font-bold">SSC</td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[0]?.divisionOrGroup || ''}
+                          onChange={(e) => handleQualificationChange(0, 'divisionOrGroup', e.target.value)}
+                          placeholder="Science / Arts / Com"
+                          className="japandi-input w-full py-1 text-xs"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[0]?.passingYear || ''}
+                          onChange={(e) => handleQualificationChange(0, 'passingYear', e.target.value)}
+                          placeholder="2024"
+                          className="japandi-input w-full py-1 text-xs font-mono"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[0]?.gpa || ''}
+                          onChange={(e) => handleQualificationChange(0, 'gpa', e.target.value)}
+                          placeholder="5.00"
+                          className="japandi-input w-full py-1 text-xs font-mono font-bold"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[0]?.board || ''}
+                          onChange={(e) => handleQualificationChange(0, 'board', e.target.value)}
+                          placeholder="Rajshahi"
+                          className="japandi-input w-full py-1 text-xs"
+                        />
+                      </td>
+                    </tr>
+
+                    {/* Row 2: HSC (For Honours students) */}
+                    <tr>
+                      <td className="p-2.5">
+                        <span className="font-bold block">HSC</span>
+                        <span className="text-[10px] text-gray-500 block">(Only for Honours)</span>
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[1]?.divisionOrGroup || ''}
+                          onChange={(e) => handleQualificationChange(1, 'divisionOrGroup', e.target.value)}
+                          placeholder="Optional"
+                          className="japandi-input w-full py-1 text-xs"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[1]?.passingYear || ''}
+                          onChange={(e) => handleQualificationChange(1, 'passingYear', e.target.value)}
+                          placeholder="Year"
+                          className="japandi-input w-full py-1 text-xs font-mono"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[1]?.gpa || ''}
+                          onChange={(e) => handleQualificationChange(1, 'gpa', e.target.value)}
+                          placeholder="GPA"
+                          className="japandi-input w-full py-1 text-xs font-mono"
+                        />
+                      </td>
+                      <td className="p-2">
+                        <input
+                          type="text"
+                          value={formData.qualifications?.[1]?.board || ''}
+                          onChange={(e) => handleQualificationChange(1, 'board', e.target.value)}
+                          placeholder="Board"
+                          className="japandi-input w-full py-1 text-xs"
+                        />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Physical Measurements (Items 15 - 19) */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2">
+                Physical Measurements & Additional Skills
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {/* 15. Height */}
+                <div>
+                  <label className="font-bold block mb-1">15. Height: *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min="4"
+                        max="7"
+                        required
+                        value={formData.heightFeet}
+                        onChange={(e) => setFormData({ ...formData, heightFeet: e.target.value })}
+                        className="japandi-input w-full py-1.5 font-mono"
+                      />
+                      <span className="text-gray-500 font-bold">ft</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="11"
+                        required
+                        value={formData.heightInches}
+                        onChange={(e) => setFormData({ ...formData, heightInches: e.target.value })}
+                        className="japandi-input w-full py-1.5 font-mono"
+                      />
+                      <span className="text-gray-500 font-bold">in</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 16. Blood Group */}
+                <div>
+                  <label className="font-bold block mb-1">16. Blood Group: *</label>
+                  <select
+                    value={formData.bloodGroup}
+                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
+                    className="japandi-input w-full font-bold"
+                  >
+                    <option value="A+">A+ (Positive)</option>
+                    <option value="A-">A- (Negative)</option>
+                    <option value="B+">B+ (Positive)</option>
+                    <option value="B-">B- (Negative)</option>
+                    <option value="O+">O+ (Positive)</option>
+                    <option value="O-">O- (Negative)</option>
+                    <option value="AB+">AB+ (Positive)</option>
+                    <option value="AB-">AB- (Negative)</option>
+                  </select>
+                </div>
+
+                {/* 17. Weight */}
+                <div>
+                  <label className="font-bold block mb-1">17. Weight (kg): *</label>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      required
+                      min="35"
+                      max="120"
+                      value={formData.weightKg}
+                      onChange={(e) => setFormData({ ...formData, weightKg: e.target.value })}
+                      placeholder="62"
+                      className="japandi-input w-full font-mono"
+                    />
+                    <span className="text-gray-500 font-bold">kg</span>
+                  </div>
+                </div>
+
+                {/* 18. Chest */}
+                <div>
+                  <label className="font-bold block mb-1">18. Chest (Normal / Expanded):</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={formData.chestNormal || ''}
+                      onChange={(e) => setFormData({ ...formData, chestNormal: e.target.value })}
+                      placeholder="Normal (32)"
+                      className="japandi-input w-full text-[11px]"
+                    />
+                    <input
+                      type="text"
+                      value={formData.chestExpanded || ''}
+                      onChange={(e) => setFormData({ ...formData, chestExpanded: e.target.value })}
+                      placeholder="Exp (34)"
+                      className="japandi-input w-full text-[11px]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 19. Additional Skills */}
+              <div>
+                <label className="font-bold block mb-1">
+                  19. Additional Skills & Extracurriculars (অতিরিক্ত দক্ষতা ও বিশেষ শখ):
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.additionalSkills || ''}
+                  onChange={(e) => setFormData({ ...formData, additionalSkills: e.target.value, reason: e.target.value })}
+                  placeholder="e.g. Sports (Football, Cricket), Red Crescent First Aid, Rover Scout, Computer Programming, Band Instruments, Public Speaking..."
+                  className="japandi-input w-full resize-none"
+                />
+              </div>
+            </div>
+
+            {/* PLEDGE (Item 20) & GUARDIAN CONSENT (Item 21) */}
+            <div className="space-y-4 pt-2">
+              {/* Item 20: Pledge */}
+              <div className="p-4 rounded-2xl bg-[#eedc82]/20 dark:bg-[#eedc82]/10 border border-[#eedc82]/60 space-y-3">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82] block">
+                  20. BNCC Cadet Pledge (অঙ্গীকারনামা)
+                </span>
+                <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed text-justify">
+                  "I promise that I shall be bound to perform any service activity in the national interest by order of BNCC. Even at the risk of my life for the defense of the country, I will obey the lawful orders of my superior officers and cadets. From the date of my enlistment in the BNCC, I will be bound to appear for any of the above-mentioned duties whenever called upon by the BNCC as long as my cadetship remains active."
+                </p>
+                <label className="flex items-start gap-2.5 cursor-pointer font-bold text-xs">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={formData.pledgeAccepted}
+                    onChange={(e) => setFormData({ ...formData, pledgeAccepted: e.target.checked })}
+                    className="mt-0.5 rounded accent-[#6b5e10]"
+                  />
+                  <span>I solemnly accept and agree to the BNCC Cadet Pledge.</span>
+                </label>
+              </div>
+
+              {/* Item 21: Guardian Consent */}
+              <div className="p-4 rounded-2xl bg-[#eedc82]/20 dark:bg-[#eedc82]/10 border border-[#eedc82]/60 space-y-3">
+                <span className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82] block">
+                  21. Guardian's Consent Letter (অভিভাবকের সম্মতিপত্র)
+                </span>
+                <p className="text-xs text-gray-800 dark:text-gray-200 leading-relaxed text-justify">
+                  "This is to certify that my child is a 1st-year student in Class 11 / Bachelor's Degree program at New Govt. Degree College, Rajshahi. He/She wishes to become a member of the Bangladesh National Cadet Corps (BNCC) unit of the said college. I hereby grant permission for my son/child to become a member of the Bangladesh National Cadet Corps."
+                </p>
+                <label className="flex items-start gap-2.5 cursor-pointer font-bold text-xs">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={formData.guardianConsentAccepted}
+                    onChange={(e) => setFormData({ ...formData, guardianConsentAccepted: e.target.checked })}
+                    className="mt-0.5 rounded accent-[#6b5e10]"
+                  />
+                  <span>I confirm that my parent/guardian has granted official consent for BNCC enlistment.</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Submission Controls */}
+            <div className="pt-4 border-t border-[#cdc6b3]/50 dark:border-[#38342c] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                After submission, your application with unique Serial No will be generated for physical 2-page printout.
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSlipBlank(true);
+                    setSlipApplicant(null);
+                    setShowSlip(true);
+                  }}
+                  className="japandi-btn-secondary py-3 px-5 text-xs font-bold w-full sm:w-auto text-center"
+                >
+                  <Printer className="w-4 h-4 mr-1.5 inline" />
+                  <span>Print Blank Form</span>
+                </button>
+
+                <button
+                  id="btn-submit-recruitment-form"
+                  type="submit"
+                  className="japandi-btn-primary py-3 px-7 text-sm font-bold w-full sm:w-auto text-center shadow-md hover:scale-102 transition-transform"
+                >
+                  <span>Submit & Generate Form</span>
+                  <ArrowRight className="w-4 h-4 ml-1.5 inline" />
+                </button>
+              </div>
+            </div>
+          </form>
+        </motion.div>
+      )}
+
+      {/* 4. APPLICATION STATUS SEARCH DRAWER / MODAL */}
+      <AnimatePresence>
+        {showStatusSearch && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#fcf9f3] dark:bg-[#1e1d19] border border-[#cdc6b3] dark:border-[#423e35] rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-[#cdc6b3] dark:border-[#423e35] pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-[#eedc82]/50 text-[#6b5e10] dark:text-[#eedc82] rounded-xl">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+                      Track Recruitment Application
+                    </h3>
+                    <p className="text-xs text-[#695c4e] dark:text-[#aca596]">
+                      Search by Serial No, College Roll, or Mobile Number
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowStatusSearch(false);
+                    setSearchQuery('');
+                    setSearchedApplicant(null);
+                    setSearchSubmitted(false);
+                  }}
+                  className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 text-gray-500"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Enter Serial No (e.g. REC-8192) or Roll No"
+                  className="japandi-input flex-1 font-mono text-xs"
+                />
+                <button type="submit" className="japandi-btn-primary px-4 py-2 font-bold text-xs">
+                  Search
+                </button>
+              </form>
+
+              {searchSubmitted && (
+                <div className="pt-2">
+                  {searchedApplicant ? (
+                    <div className="p-4 rounded-2xl bg-white dark:bg-[#25231c] border border-[#cdc6b3]/70 dark:border-[#38342c] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7]">
+                          {searchedApplicant.serialNo || searchedApplicant.token}
+                        </span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                          searchedApplicant.status === 'Selected'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : searchedApplicant.status === 'Shortlisted'
+                            ? 'bg-blue-100 text-blue-800'
+                            : searchedApplicant.status === 'Rejected'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {searchedApplicant.status}
+                        </span>
+                      </div>
+
+                      <div className="text-xs space-y-1 text-gray-700 dark:text-gray-300">
+                        <div><strong>Applicant Name:</strong> {searchedApplicant.fullName}</div>
+                        <div><strong>College Roll:</strong> {searchedApplicant.collegeRoll}</div>
+                        <div><strong>Department:</strong> {searchedApplicant.department}</div>
+                        <div><strong>Applied Date:</strong> {searchedApplicant.appliedAt}</div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSlipApplicant(searchedApplicant);
+                          setIsSlipBlank(false);
+                          setShowSlip(true);
+                        }}
+                        className="w-full japandi-btn-secondary py-2 text-xs font-bold"
+                      >
+                        <Printer className="w-3.5 h-3.5 mr-1.5 inline" />
+                        <span>Print Official 2-Page Form</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-xs text-gray-500 dark:text-gray-400">
+                      No recruitment record found for "{searchQuery}". Please check your Roll or Serial Number.
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 5. PRINTABLE 2-PAGE APPLICATION SLIP (MODAL / PRINT VIEW) */}
+      {showSlip && (
+        <RecruitmentApplicationSlipA4
+          applicant={slipApplicant}
+          signatories={recruitmentSignatories}
+          isBlank={isSlipBlank}
+          onClose={() => setShowSlip(false)}
+        />
+      )}
+    </div>
+  );
+};

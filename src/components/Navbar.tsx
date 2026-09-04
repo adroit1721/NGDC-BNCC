@@ -90,7 +90,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-join-us-nav"
               onClick={onOpenJoinModal}
-              className="bg-[#eedc82]/90 hover:bg-[#eedc82] dark:bg-[#eedc82]/85 dark:hover:bg-[#eedc82] text-[#1c1c18] dark:text-[#141310] border border-[#6b5e10]/30 dark:border-[#eedc82]/50 py-2.5 px-5 xl:px-6 rounded-full text-[13px] xl:text-sm font-bold cursor-pointer shadow-xs active:scale-95 transition-all flex items-center gap-1.5 min-h-[42px] backdrop-blur-md"
+              className={`py-2.5 px-5 xl:px-6 rounded-full text-[13px] xl:text-sm font-bold cursor-pointer shadow-xs active:scale-95 transition-all flex items-center gap-1.5 min-h-[42px] backdrop-blur-md ${
+                activeTab === 'recruitment'
+                  ? 'bg-[#eedc82] text-[#1c1c18] border-2 border-[#6b5e10] dark:border-[#eedc82] shadow-md ring-2 ring-[#eedc82]/50 scale-102 font-extrabold'
+                  : 'bg-[#eedc82]/90 hover:bg-[#eedc82] dark:bg-[#eedc82]/85 dark:hover:bg-[#eedc82] text-[#1c1c18] dark:text-[#141310] border border-[#6b5e10]/30 dark:border-[#eedc82]/50'
+              }`}
             >
               <span>Join Us</span>
               <ArrowRight className="w-4 h-4" />

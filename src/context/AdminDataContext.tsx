@@ -18,6 +18,7 @@ import {
   ContactMessage,
   RecruitmentApplicant,
   RecruitmentAnnouncementConfig,
+  RecruitmentSignatoriesConfig,
   ContactConfig,
   FooterConfig,
   ExecutiveMessageConfig,
@@ -305,6 +306,29 @@ export const DEFAULT_RECRUITMENT_ANNOUNCEMENT: RecruitmentAnnouncementConfig = {
   headerImageUrl: '',
   footerImageUrl: '',
   footerText: 'For recruitment inquiries, visit Platoon HQ Room 123 or call +880 1712-345678. Official Army Wing Circular.',
+};
+
+// Default Official Printable Form Signatories (Controlled and editable every year from Admin Recruitment)
+export const DEFAULT_RECRUITMENT_SIGNATORIES: RecruitmentSignatoriesConfig = {
+  countersignedName: 'PUO Md. Abdul Matin',
+  countersignedPNo: 'P-8193',
+  countersignedBattalion: '31 BNCC Battalion',
+  countersignedRegiment: 'Mahasthan Regiment',
+  countersignedTitle: 'Platoon Commander',
+  countersignedInstitution: 'New Govt. Degree College, Rajshahi',
+
+  seniorCadetRankAndName: 'Cadet Sergeant Touhid',
+  seniorCadetNo: '',
+  seniorCadetBattalion: '31 BNCC Battalion',
+  seniorCadetRegiment: 'Mahasthan Regiment',
+  seniorCadetInstitution: 'New Govt. Degree College, Rajshahi',
+
+  formProviderTitle: 'Signature of Form Provider:',
+  attachments: [
+    'Photocopy of College ID Card / Admission Receipt',
+    'Photocopy of SSC / HSC Marksheet',
+    'Blood Group Certificate (if available)',
+  ],
 };
 
 const DEFAULT_CADET_CORNER_MODULES = [
@@ -642,6 +666,9 @@ interface AdminDataContextType {
   deleteRecruitmentApplicant: (id: string) => void;
   deleteApplicant: (id: string) => void;
   exportApplicantsToExcel: () => void;
+  recruitmentSignatories: RecruitmentSignatoriesConfig;
+  updateRecruitmentSignatories: (config: Partial<RecruitmentSignatoriesConfig>) => void;
+  resetRecruitmentSignatories: () => void;
 
   // Supabase Postgres DB Sync
   syncCadetsWithSupabase: () => Promise<void>;
@@ -1478,12 +1505,38 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.setItem('ngdc_recruitment_applicants', JSON.stringify(recruitmentApplicants));
   }, [recruitmentApplicants]);
 
-  const addRecruitmentApplicant = (applicant: Omit<RecruitmentApplicant, 'id' | 'token' | 'appliedAt' | 'status'>): string => {
-    const token = `NGDC-REC-${Math.floor(1000 + Math.random() * 9000)}`;
+  // --- Official Recruitment Printable Signatories Configuration (Editable yearly) ---
+  const [recruitmentSignatories, setRecruitmentSignatories] = useState<RecruitmentSignatoriesConfig>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('ngdc_recruitment_signatories');
+      if (saved) {
+        try { return JSON.parse(saved); } catch {}
+      }
+    }
+    return DEFAULT_RECRUITMENT_SIGNATORIES;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('ngdc_recruitment_signatories', JSON.stringify(recruitmentSignatories));
+  }, [recruitmentSignatories]);
+
+  const updateRecruitmentSignatories = (config: Partial<RecruitmentSignatoriesConfig>) => {
+    setRecruitmentSignatories((prev) => ({ ...prev, ...config }));
+  };
+
+  const resetRecruitmentSignatories = () => {
+    setRecruitmentSignatories(DEFAULT_RECRUITMENT_SIGNATORIES);
+  };
+
+  const addRecruitmentApplicant = (applicant: Omit<RecruitmentApplicant, 'id' | 'token' | 'appliedAt' | 'status'> & { token?: string }): string => {
+    const year = new Date().getFullYear();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const token = applicant.token || `NGDC-REC-${year}-${randomSuffix}`;
     const newApplicant: RecruitmentApplicant = {
       ...applicant,
       id: `app-${Date.now()}`,
       token,
+      serialNo: applicant.serialNo || token,
       status: 'Pending',
       appliedAt: new Date().toLocaleString(),
     };
@@ -1708,6 +1761,9 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteRecruitmentApplicant,
         deleteApplicant: (id: string) => deleteRecruitmentApplicant(id),
         exportApplicantsToExcel,
+        recruitmentSignatories,
+        updateRecruitmentSignatories,
+        resetRecruitmentSignatories,
 
         syncCadetsWithSupabase,
         isSupabaseActive: isSupabaseConfigured(),

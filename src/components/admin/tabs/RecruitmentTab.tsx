@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminData } from '../../../context/AdminDataContext';
-import { FormFieldConfig, RecruitmentApplicant } from '../../../types';
+import { FormFieldConfig, RecruitmentApplicant, RecruitmentSignatoriesConfig } from '../../../types';
 import { CloudinaryUploader } from '../../common/CloudinaryUploader';
 import { RecruitmentApplicationSlipA4 } from '../../common/RecruitmentApplicationSlipA4';
 import * as XLSX from 'xlsx';
@@ -25,6 +25,9 @@ import {
   Eye,
   X,
   FileText,
+  RotateCcw,
+  Building,
+  Check,
 } from 'lucide-react';
 
 export const RecruitmentTab: React.FC = () => {
@@ -39,19 +42,34 @@ export const RecruitmentTab: React.FC = () => {
     updateRecruitmentApplicant,
     deleteApplicant,
     addApplicant,
+    recruitmentSignatories,
+    updateRecruitmentSignatories,
+    resetRecruitmentSignatories,
   } = useAdminData();
 
   // Safeguard applicant list
   const applicantList = applicants || recruitmentApplicants || [];
 
-  // Subtabs: 'announcement' | 'applicants' | 'formBuilder' | 'selectedList'
-  const [activeSubtab, setActiveSubtab] = useState<'announcement' | 'applicants' | 'formBuilder' | 'selectedList'>('applicants');
+  // Subtabs: 'announcement' | 'applicants' | 'formBuilder' | 'selectedList' | 'signatories'
+  const [activeSubtab, setActiveSubtab] = useState<'announcement' | 'applicants' | 'formBuilder' | 'selectedList' | 'signatories'>('applicants');
 
   // Edit Applicant Modal state
   const [editingApplicant, setEditingApplicant] = useState<RecruitmentApplicant | null>(null);
 
   // A4 PDF Print / Download state
   const [printingApplicant, setPrintingApplicant] = useState<RecruitmentApplicant | null>(null);
+  const [printBlankModal, setPrintBlankModal] = useState(false);
+
+  // Signatories Form State
+  const [signatoriesForm, setSignatoriesForm] = useState<RecruitmentSignatoriesConfig>(recruitmentSignatories);
+  const [signatoriesSaved, setSignatoriesSaved] = useState(false);
+  const [newAttachmentText, setNewAttachmentText] = useState('');
+
+  useEffect(() => {
+    if (recruitmentSignatories) {
+      setSignatoriesForm(recruitmentSignatories);
+    }
+  }, [recruitmentSignatories]);
 
   // Announcement Form state
   const [announcementForm, setAnnouncementForm] = useState(
@@ -206,6 +224,39 @@ export const RecruitmentTab: React.FC = () => {
     setNewSelectedDept('');
   };
 
+  // Signatories Handlers
+  const handleSaveSignatories = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateRecruitmentSignatories(signatoriesForm);
+    setSignatoriesSaved(true);
+    setTimeout(() => setSignatoriesSaved(false), 2500);
+  };
+
+  const handleResetSignatories = () => {
+    if (confirm('Reset recruitment form signatories to default platoon officers?')) {
+      resetRecruitmentSignatories();
+      setSignatoriesSaved(true);
+      setTimeout(() => setSignatoriesSaved(false), 2000);
+    }
+  };
+
+  const handleAddAttachment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAttachmentText.trim()) return;
+    setSignatoriesForm((prev) => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), newAttachmentText.trim()],
+    }));
+    setNewAttachmentText('');
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setSignatoriesForm((prev) => ({
+      ...prev,
+      attachments: (prev.attachments || []).filter((_, i) => i !== index),
+    }));
+  };
+
   // Filtered applicants
   const filteredApplicants = applicantList.filter((app) => {
     const matchesSearch =
@@ -291,6 +342,16 @@ export const RecruitmentTab: React.FC = () => {
           }`}
         >
           Recruitment Form Builder ({recruitmentFields.length} fields)
+        </button>
+        <button
+          onClick={() => setActiveSubtab('signatories')}
+          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeSubtab === 'signatories'
+              ? 'bg-[#eedc82] text-[#1c1c18] shadow-2xs'
+              : 'text-[#695c4e] dark:text-[#aca596]'
+          }`}
+        >
+          Yearly Form Signatories
         </button>
       </div>
 
@@ -866,6 +927,316 @@ export const RecruitmentTab: React.FC = () => {
         </div>
       )}
 
+      {/* SUBTAB 5: YEARLY FORM SIGNATORIES */}
+      {activeSubtab === 'signatories' && (
+        <div className="space-y-6">
+          <div className="bg-[#fcf9f3] dark:bg-[#1e1d19] border border-[#cdc6b3]/50 dark:border-[#38342c] p-5 sm:p-6 rounded-3xl space-y-4 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#cdc6b3]/40 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="p-2 rounded-xl bg-[#eedc82]/50 text-[#6b5e10] dark:text-[#eedc82]">
+                    <Building className="w-5 h-5" />
+                  </span>
+                  <h3 className="text-lg font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
+                    Yearly Form Signatories & Official Document Settings
+                  </h3>
+                </div>
+                <p className="text-xs text-[#7c7767] dark:text-[#aca596] mt-1">
+                  Configure the official signatories that appear on Page 2 of the printable recruit admission form (Countersigned Platoon Commander, Senior Cadet, and Form Provider). Update annually when leadership changes.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => setPrintBlankModal(true)}
+                  className="japandi-btn-secondary text-xs py-2 px-3 font-bold flex items-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5 text-[#6b5e10] dark:text-[#eedc82]" />
+                  <span>Preview Blank Form</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetSignatories}
+                  className="p-2 rounded-xl text-xs text-gray-600 hover:text-red-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-950/30 border border-gray-300 dark:border-gray-700 transition-colors"
+                  title="Reset to default platoon officers"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {signatoriesSaved && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-center gap-2 font-bold animate-fadeIn">
+                <Check className="w-4 h-4" />
+                <span>Signatories configuration updated and saved successfully!</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSignatories} className="space-y-6 text-xs text-[#1c1c18] dark:text-[#fcfbf7]">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 1. Countersigned Officer */}
+                <div className="bg-[#f6f3ed] dark:bg-[#25231c] p-4 sm:p-5 rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] space-y-3">
+                  <div className="flex items-center gap-2 border-b border-[#cdc6b3]/40 pb-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6b5e10] dark:bg-[#eedc82]" />
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82]">
+                      1. Countersigned Authority (Platoon Commander)
+                    </h4>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="font-bold block mb-1">Rank & Officer Full Name: *</label>
+                      <input
+                        type="text"
+                        required
+                        value={signatoriesForm.countersignedName || ''}
+                        onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedName: e.target.value })}
+                        placeholder="e.g. PUO Md. Abdul Matin"
+                        className="japandi-input w-full font-bold"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold block mb-1">Personal No / P-No: *</label>
+                        <input
+                          type="text"
+                          required
+                          value={signatoriesForm.countersignedPNo || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedPNo: e.target.value })}
+                          placeholder="e.g. P-8193"
+                          className="japandi-input w-full font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold block mb-1">Battalion: *</label>
+                        <input
+                          type="text"
+                          required
+                          value={signatoriesForm.countersignedBattalion || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedBattalion: e.target.value })}
+                          placeholder="e.g. 31 BNCC Battalion"
+                          className="japandi-input w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold block mb-1">Regiment: *</label>
+                        <input
+                          type="text"
+                          required
+                          value={signatoriesForm.countersignedRegiment || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedRegiment: e.target.value })}
+                          placeholder="e.g. Mahasthan Regiment"
+                          className="japandi-input w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold block mb-1">Platoon Appointment / Title: *</label>
+                        <input
+                          type="text"
+                          required
+                          value={signatoriesForm.countersignedTitle || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedTitle: e.target.value })}
+                          placeholder="e.g. Platoon Commander"
+                          className="japandi-input w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold block mb-1">Institution Name: *</label>
+                      <input
+                        type="text"
+                        required
+                        value={signatoriesForm.countersignedInstitution || ''}
+                        onChange={(e) => setSignatoriesForm({ ...signatoriesForm, countersignedInstitution: e.target.value })}
+                        placeholder="e.g. New Govt. Degree College, Rajshahi"
+                        className="japandi-input w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Platoon Senior Cadet */}
+                <div className="bg-[#f6f3ed] dark:bg-[#25231c] p-4 sm:p-5 rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] space-y-3">
+                  <div className="flex items-center gap-2 border-b border-[#cdc6b3]/40 pb-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#6b5e10] dark:bg-[#eedc82]" />
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82]">
+                      2. Signature of Platoon Senior Cadet
+                    </h4>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="font-bold block mb-1">Rank & Cadet Full Name: *</label>
+                      <input
+                        type="text"
+                        required
+                        value={signatoriesForm.seniorCadetRankAndName || ''}
+                        onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetRankAndName: e.target.value })}
+                        placeholder="e.g. Cadet Sergeant Touhid"
+                        className="japandi-input w-full font-bold"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-bold block mb-1">Cadet ID / No (Optional):</label>
+                        <input
+                          type="text"
+                          value={signatoriesForm.seniorCadetNo || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetNo: e.target.value })}
+                          placeholder="e.g. CDT-2022-04"
+                          className="japandi-input w-full font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold block mb-1">Battalion: *</label>
+                        <input
+                          type="text"
+                          required
+                          value={signatoriesForm.seniorCadetBattalion || ''}
+                          onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetBattalion: e.target.value })}
+                          placeholder="e.g. 31 BNCC Battalion"
+                          className="japandi-input w-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-bold block mb-1">Regiment: *</label>
+                      <input
+                        type="text"
+                        required
+                        value={signatoriesForm.seniorCadetRegiment || ''}
+                        onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetRegiment: e.target.value })}
+                        placeholder="e.g. Mahasthan Regiment"
+                        className="japandi-input w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold block mb-1">Institution Name: *</label>
+                      <input
+                        type="text"
+                        required
+                        value={signatoriesForm.seniorCadetInstitution || ''}
+                        onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetInstitution: e.target.value })}
+                        placeholder="e.g. New Govt. Degree College, Rajshahi"
+                        className="japandi-input w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Form Provider & Attachments Box */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-[#f6f3ed] dark:bg-[#25231c] p-4 sm:p-5 rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82]">
+                    3. Signature of Form Provider Block
+                  </h4>
+                  <div>
+                    <label className="font-bold block mb-1">Heading / Designation Label:</label>
+                    <input
+                      type="text"
+                      value={signatoriesForm.formProviderTitle || ''}
+                      onChange={(e) => setSignatoriesForm({ ...signatoriesForm, formProviderTitle: e.target.value })}
+                      placeholder="Signature of Form Provider:"
+                      className="japandi-input w-full"
+                    />
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      Appears on the left signatory column above the date line.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-[#f6f3ed] dark:bg-[#25231c] p-4 sm:p-5 rounded-2xl border border-[#cdc6b3]/50 dark:border-[#38342c] space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-[#6b5e10] dark:text-[#eedc82]">
+                    4. Required Attachments List (Printed on Page 2)
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {(signatoriesForm.attachments || []).map((att, idx) => (
+                      <li key={idx} className="flex items-center justify-between bg-white dark:bg-[#1e1d19] p-2 rounded-xl border border-gray-200 dark:border-gray-800 text-[11px]">
+                        <span>{idx + 1}. {att}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(idx)}
+                          className="text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex gap-2 pt-1">
+                    <input
+                      type="text"
+                      value={newAttachmentText}
+                      onChange={(e) => setNewAttachmentText(e.target.value)}
+                      placeholder="Add attachment (e.g. 02 Passport Photos)"
+                      className="japandi-input flex-1 text-[11px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddAttachment}
+                      className="japandi-btn-secondary px-3 text-xs font-bold cursor-pointer"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Preview Card */}
+              <div className="border border-dashed border-gray-400 p-4 rounded-2xl bg-white dark:bg-[#1e1d19] text-black dark:text-white space-y-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+                  Live Preview: Page 2 Official Signatures Block
+                </span>
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] border-t border-black pt-3">
+                  <div className="border-t border-dashed border-gray-400 pt-1">
+                    <span className="font-bold block">{signatoriesForm.formProviderTitle || 'Signature of Form Provider:'}</span>
+                    <span className="text-gray-500 text-[9px]">Date: ........................</span>
+                  </div>
+                  <div className="border-t border-dashed border-gray-400 pt-1">
+                    <span className="font-bold uppercase text-[9px] block">Countersigned:</span>
+                    <span className="font-bold block text-[10px]">{signatoriesForm.countersignedName}</span>
+                    <span className="block font-mono text-[9px]">{signatoriesForm.countersignedPNo}</span>
+                    <span className="block text-[9px]">{signatoriesForm.countersignedBattalion}</span>
+                    <span className="block text-[9px]">{signatoriesForm.countersignedRegiment}</span>
+                    <span className="font-semibold block text-[9px]">{signatoriesForm.countersignedTitle}</span>
+                    <span className="block text-[8px] text-gray-500">{signatoriesForm.countersignedInstitution}</span>
+                  </div>
+                  <div className="border-t border-dashed border-gray-400 pt-1">
+                    <span className="font-bold text-[9px] block">Signature of Platoon Senior Cadet:</span>
+                    <span className="font-bold block text-[10px] mt-0.5">{signatoriesForm.seniorCadetRankAndName}</span>
+                    {signatoriesForm.seniorCadetNo ? <span className="block font-mono text-[9px]">{signatoriesForm.seniorCadetNo}</span> : null}
+                    <span className="block text-[9px]">{signatoriesForm.seniorCadetBattalion}</span>
+                    <span className="block text-[9px]">{signatoriesForm.seniorCadetRegiment}</span>
+                    <span className="block text-[8px] text-gray-500">{signatoriesForm.seniorCadetInstitution}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <div className="flex justify-end gap-3 pt-3 border-t border-[#cdc6b3]/50">
+                <button
+                  type="submit"
+                  className="japandi-btn-primary px-6 py-2.5 font-bold text-xs shadow-md cursor-pointer"
+                >
+                  Save Yearly Signatories
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* EDIT APPLICANT MODAL */}
       {editingApplicant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
@@ -1079,6 +1450,16 @@ export const RecruitmentTab: React.FC = () => {
           announcement={announcementForm}
           formFields={recruitmentFields}
           onClose={() => setPrintingApplicant(null)}
+        />
+      )}
+
+      {/* BLANK FORM PREVIEW MODAL */}
+      {printBlankModal && (
+        <RecruitmentApplicationSlipA4
+          isBlank={true}
+          announcement={announcementForm}
+          signatories={signatoriesForm}
+          onClose={() => setPrintBlankModal(false)}
         />
       )}
     </div>

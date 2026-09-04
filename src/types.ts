@@ -6,7 +6,8 @@ export type TabType =
   | 'memories'
   | 'cadets'
   | 'honor'
-  | 'contact';
+  | 'contact'
+  | 'recruitment';
 
 export type AdminMenuKey =
   | 'home'
@@ -262,6 +263,42 @@ export interface RecruitmentAnnouncementConfig {
   footerText?: string;
 }
 
+export interface RecruitmentSignatoriesConfig {
+  // Countersigned (PUO / Commander)
+  countersignedName: string;
+  countersignedPNo: string;
+  countersignedBattalion: string;
+  countersignedRegiment: string;
+  countersignedTitle: string;
+  countersignedInstitution: string;
+
+  // Signature of Platoon Senior Cadet
+  seniorCadetRankAndName: string;
+  seniorCadetNo: string;
+  seniorCadetBattalion: string;
+  seniorCadetRegiment: string;
+  seniorCadetInstitution: string;
+
+  // Form Provider Title & Attachments
+  formProviderTitle: string;
+  attachments: string[];
+}
+
+export interface ApplicantQualification {
+  examName: 'SSC' | 'HSC' | string;
+  divisionOrGroup: string;
+  passingYear: string;
+  gpa: string;
+  board: string;
+}
+
+export interface ApplicantAddress {
+  village: string;
+  post: string;
+  upazila: string;
+  district: string;
+}
+
 export interface RecruitmentFormState {
   fullName: string;
   email: string;
@@ -277,6 +314,29 @@ export interface RecruitmentFormState {
   avatarUrl?: string;
   customData?: Record<string, any>;
   customAnswers?: Record<string, any>;
+
+  // Official Admission Form Fields (Page 1 & 2)
+  serialNo?: string;
+  nameBangla?: string;
+  nameEnglish?: string;
+  fatherNameBangla?: string;
+  fatherNameEnglish?: string;
+  motherNameBangla?: string;
+  motherNameEnglish?: string;
+  gender?: 'Male' | 'Female' | 'Others' | string;
+  studentClass?: '11th' | '12th' | 'Honours 1st year' | 'Honours 2nd year' | string;
+  dateOfBirth?: string;
+  religion?: string;
+  presentAddress?: ApplicantAddress;
+  permanentAddress?: ApplicantAddress;
+  phoneSelf?: string;
+  phoneGuardian?: string;
+  qualifications?: ApplicantQualification[];
+  chestNormal?: string;
+  chestExpanded?: string;
+  additionalSkills?: string;
+  pledgeAccepted?: boolean;
+  guardianConsentAccepted?: boolean;
 }
 
 export interface RecruitmentApplicant {
@@ -300,6 +360,29 @@ export interface RecruitmentApplicant {
   weight?: string;
   customData?: Record<string, any>;
   customAnswers?: Record<string, any>;
+
+  // Official Admission Form Fields (Page 1 & 2)
+  serialNo?: string;
+  nameBangla?: string;
+  nameEnglish?: string;
+  fatherNameBangla?: string;
+  fatherNameEnglish?: string;
+  motherNameBangla?: string;
+  motherNameEnglish?: string;
+  gender?: 'Male' | 'Female' | 'Others' | string;
+  studentClass?: '11th' | '12th' | 'Honours 1st year' | 'Honours 2nd year' | string;
+  dateOfBirth?: string;
+  religion?: string;
+  presentAddress?: ApplicantAddress;
+  permanentAddress?: ApplicantAddress;
+  phoneSelf?: string;
+  phoneGuardian?: string;
+  qualifications?: ApplicantQualification[];
+  chestNormal?: string;
+  chestExpanded?: string;
+  additionalSkills?: string;
+  pledgeAccepted?: boolean;
+  guardianConsentAccepted?: boolean;
 }
 
 export interface ContactConfig {
