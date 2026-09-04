@@ -417,6 +417,4 @@ export interface FooterConfig {
   mottoText: string;
 }
 
-declare module 'html2pdf.js';
-
 

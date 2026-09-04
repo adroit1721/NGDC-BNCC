@@ -416,12 +416,12 @@ html {
 }
 
 /* =========================================================================
-   Print Rules: Ensure ONLY the 2-Page Official Form is Printed (No Blank Pages)
+   Print Rules: Ensure ONLY the 2-Page Official Form is Printed (No Blank Pages or Website)
    ========================================================================= */
 @media print {
   @page {
     size: A4 portrait;
-    margin: 6mm 8mm;
+    margin: 0;
   }
 
   html, body {
@@ -436,6 +436,14 @@ html {
     print-color-adjust: exact !important;
   }
 
+  /* When printing the recruitment slip, HIDE the entire website application inside #root */
+  body.printing-slip-ready #root,
+  body.printing-slip #root,
+  .printing-slip-ready #root,
+  .printing-slip #root {
+    display: none !important;
+  }
+
   /* Hide app navigation, headers, footers, and all interactive controls */
   .no-print,
   .print-hide,
@@ -447,6 +455,17 @@ html {
   button,
   .main-app-content {
     display: none !important;
+  }
+
+  /* Portal container for the recruitment slip */
+  #recruitment-slip-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
   }
 
   /* Make modal backdrop completely static and non-blocking in print */
@@ -467,7 +486,7 @@ html {
   #official-recruitment-a4-document {
     position: static !important;
     display: block !important;
-    width: 100% !important;
+    width: 210mm !important;
     max-width: 210mm !important;
     margin: 0 auto !important;
     padding: 0 !important;
@@ -476,11 +495,13 @@ html {
     overflow: visible !important;
   }
 
-  /* Page container strictly sized to A4 printable region */
+  /* Page container strictly sized to A4 printable region (210mm x 297mm) */
   .slip-a4-page {
     position: relative !important;
     width: 210mm !important;
-    min-height: 284mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
     margin: 0 auto !important;
     padding: 8mm 10mm !important;
     background: #ffffff !important;
@@ -491,6 +512,7 @@ html {
     break-after: page !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    overflow: hidden !important;
   }
 
   .slip-a4-page:last-child {
