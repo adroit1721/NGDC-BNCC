@@ -1,0 +1,376 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #fcf9f3;
+    --bg-surface: #f6f3ed;
+    --bg-card: #fcf9f3;
+    --border-color: #cdc6b3;
+    --text-primary: #1c1c18;
+    --text-secondary: #4a4738;
+    --text-muted: #695c4e;
+    --accent-gold: #eedc82;
+    --accent-gold-hover: #e5d16d;
+    --accent-dark: #6b5e10;
+  }
+
+  html.dark,
+  .dark {
+    --bg-main: #141311;
+    --bg-surface: #1e1d19;
+    --bg-card: #25231e;
+    --border-color: #444036;
+    --text-primary: #fbf9f4;
+    --text-secondary: #d4cec1;
+    --text-muted: #aca596;
+    --accent-gold: #f2e28a;
+    --accent-gold-hover: #faec9c;
+    --accent-dark: #ffd84d;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+}
+
+.japandi-card {
+  background-color: #fcf9f3;
+  border: 1px solid #cdc6b3;
+  border-radius: 1.5rem;
+  transition: background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.japandi-btn-primary {
+  background-color: #eedc82;
+  color: #1c1c18;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid #d5c470;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.japandi-btn-primary:hover {
+  background-color: #e5d16d;
+  box-shadow: 0 4px 12px rgba(107, 94, 16, 0.15);
+  transform: translateY(-1px);
+}
+
+.japandi-btn-primary:active {
+  transform: translateY(0);
+}
+
+.japandi-btn-secondary {
+  border: 1px solid #cdc6b3;
+  background-color: transparent;
+  color: #1c1c18;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.japandi-btn-secondary:hover {
+  background-color: #f0eee8;
+  border-color: #7c7767;
+}
+
+/* =========================================================================
+   High-Contrast Dark Theme Rules
+   ========================================================================= */
+.dark body {
+  background-color: #141311;
+  color: #fbf9f4;
+}
+
+.dark .japandi-card {
+  background-color: #23211c;
+  border-color: #423e35;
+}
+
+.dark .japandi-card:hover {
+  border-color: #635e50;
+}
+
+.dark .japandi-btn-primary {
+  background-color: #eedc82;
+  color: #141311;
+  border-color: #fae88f;
+}
+
+.dark .japandi-btn-primary:hover {
+  background-color: #faec9c;
+  box-shadow: 0 4px 16px rgba(238, 220, 130, 0.25);
+}
+
+.dark .japandi-btn-secondary {
+  border-color: #49453c;
+  background-color: #201e19;
+  color: #fbf9f4;
+}
+
+.dark .japandi-btn-secondary:hover {
+  background-color: #2d2b24;
+  border-color: #eedc82;
+  color: #eedc82;
+}
+
+/* Dark mode overrides for explicit background and surface utility classes */
+.dark section.bg-\[\#f6f3ed\],
+.dark div.bg-\[\#f6f3ed\] {
+  background-color: #171613 !important;
+  border-color: #333027 !important;
+}
+
+.dark section.bg-\[\#fcf9f3\],
+.dark div.bg-\[\#fcf9f3\],
+.dark article.bg-\[\#fcf9f3\] {
+  background-color: #1c1a16 !important;
+  border-color: #38342b !important;
+}
+
+.dark div.bg-\[\#f0eee8\],
+.dark div.bg-\[\#ebe8e2\] {
+  background-color: #22201a !important;
+  border-color: #3b372e !important;
+}
+
+.dark header .bg-\[\#f0eee8\] {
+  background-color: #181714 !important;
+  border-color: #333028 !important;
+}
+
+/* Text color contrast enhancements */
+.dark .text-\[\#1c1c18\] {
+  color: #fcfbf7 !important;
+}
+
+.dark .text-\[\#4a4738\] {
+  color: #d6d0c2 !important;
+}
+
+.dark .text-\[\#695c4e\],
+.dark .text-\[\#7c7767\],
+.dark .text-\[\#504537\] {
+  color: #b3ac9e !important;
+}
+
+.dark .text-\[\#31312d\] {
+  color: #e0dbce !important;
+}
+
+.dark .text-\[\#6b5e10\] {
+  color: #f2e28a !important;
+}
+
+/* Borders in dark mode */
+.dark .border-\[\#cdc6b3\],
+.dark .border-\[\#cdc6b3\]\/30,
+.dark .border-\[\#cdc6b3\]\/40,
+.dark .border-\[\#cdc6b3\]\/50,
+.dark .border-\[\#cdc6b3\]\/60 {
+  border-color: #3e3a30 !important;
+}
+
+/* Inputs, Textareas, and Selects in dark mode */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #191815 !important;
+  color: #fcfbf7 !important;
+  border-color: #464237 !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #eedc82 !important;
+  box-shadow: 0 0 0 1px #eedc82 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #837c6f !important;
+}
+
+/* Badges & Pills */
+.dark .bg-\[\#eedc82\]\/40,
+.dark .bg-\[\#eedc82\]\/50,
+.dark .bg-\[\#eedc82\]\/60,
+.dark .bg-\[\#eedc82\]\/20,
+.dark .bg-\[\#eedc82\]\/25,
+.dark .bg-\[\#eedc82\]\/30 {
+  background-color: rgba(238, 220, 130, 0.15) !important;
+  color: #faec9c !important;
+  border-color: rgba(238, 220, 130, 0.3) !important;
+}
+
+.dark .text-\[\#6b5e10\] {
+  color: #eedc82 !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-amber-100 {
+  background-color: rgba(238, 220, 130, 0.1) !important;
+  color: #faec9c !important;
+  border-color: rgba(238, 220, 130, 0.25) !important;
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.dark .bg-blue-50,
+.dark .bg-blue-100 {
+  background-color: rgba(59, 130, 246, 0.12) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  color: #fca5a5 !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+/* Custom scrollbar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* =========================================================================
+   Framer-Style Smooth Scroll, Ticker Marquee & Reveal Effects
+   ========================================================================= */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-reverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.12;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.22;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes twilight-float-1 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(25px, -35px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95);
+  }
+}
+
+@keyframes twilight-float-2 {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(-30px, 30px) scale(0.96);
+  }
+  66% {
+    transform: translate(20px, -25px) scale(1.06);
+  }
+}
+
+@keyframes twilight-pulse {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.1);
+  }
+}
+
+.animate-twilight-float-1 {
+  animation: twilight-float-1 18s ease-in-out infinite;
+}
+
+.animate-twilight-float-2 {
+  animation: twilight-float-2 22s ease-in-out infinite;
+}
+
+.animate-twilight-pulse {
+  animation: twilight-pulse 12s ease-in-out infinite;
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 32s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse 36s linear infinite;
+}
+
+.animate-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 6s ease-in-out infinite;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Framer-like smooth card interactions */
+.framer-card {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.framer-card:hover {
+  transform: translateY(-4px);
+}
+
