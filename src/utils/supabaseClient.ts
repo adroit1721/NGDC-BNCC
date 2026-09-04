@@ -11,8 +11,21 @@ export function getSupabaseConfig(): { supabaseUrl: string; supabaseAnonKey: str
   const localUrl = typeof window !== 'undefined' ? localStorage.getItem('ngdc_supabase_url') || '' : '';
   const localKey = typeof window !== 'undefined' ? localStorage.getItem('ngdc_supabase_anon_key') || '' : '';
 
+  let finalUrl = (envUrl || localUrl || '').trim();
+  // Supabase JS client automatically appends /rest/v1 for database queries.
+  // If the user accidentally provided the full REST URL, strip it to prevent 404s.
+  if (finalUrl.endsWith('/rest/v1')) {
+    finalUrl = finalUrl.replace('/rest/v1', '');
+  }
+  if (finalUrl.endsWith('/rest/v1/')) {
+    finalUrl = finalUrl.replace('/rest/v1/', '');
+  }
+  if (finalUrl.endsWith('/')) {
+    finalUrl = finalUrl.slice(0, -1);
+  }
+
   return {
-    supabaseUrl: (envUrl || localUrl || '').trim(),
+    supabaseUrl: finalUrl,
     supabaseAnonKey: (envKey || localKey || '').trim(),
   };
 }

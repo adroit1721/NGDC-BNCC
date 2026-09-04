@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer, X, FileText, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import * as htmlToImage from 'html-to-image';
 import { RecruitmentApplicant, RecruitmentAnnouncementConfig, FormFieldConfig, RecruitmentSignatoriesConfig } from '../../types';
 import { ASSETS } from '../../data/bnccData';
 import { useAdminData } from '../../context/AdminDataContext';
@@ -78,26 +78,19 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
       const serial = appData.serialNo || appData.token || (isBlank ? 'Blank' : 'Application');
       const filename = `BNCC-Admission-Form-${serial}.pdf`;
 
-      const canvasOptions = {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
+      const imageOptions = {
+        quality: 0.95,
         backgroundColor: '#ffffff',
-        logging: false,
-        imageTimeout: 15000,
-        scrollX: 0,
-        scrollY: 0,
+        pixelRatio: 2,
       };
 
       // 1. Render Page 1
-      const canvas1 = await html2canvas(page1Ref.current, canvasOptions);
-      const imgData1 = canvas1.toDataURL('image/jpeg', 0.95);
+      const imgData1 = await htmlToImage.toJpeg(page1Ref.current, imageOptions);
 
       setPdfStatus('Rendering Page 2 (Pledge, Board Evaluation & Signatures)...');
 
       // 2. Render Page 2
-      const canvas2 = await html2canvas(page2Ref.current, canvasOptions);
-      const imgData2 = canvas2.toDataURL('image/jpeg', 0.95);
+      const imgData2 = await htmlToImage.toJpeg(page2Ref.current, imageOptions);
 
       setPdfStatus('Assembling 2-Page A4 PDF...');
 
