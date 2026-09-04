@@ -271,6 +271,7 @@ export interface RecruitmentSignatoriesConfig {
   countersignedRegiment: string;
   countersignedTitle: string;
   countersignedInstitution: string;
+  countersignedSignatureUrl?: string;
 
   // Signature of Platoon Senior Cadet
   seniorCadetRankAndName: string;
@@ -278,6 +279,7 @@ export interface RecruitmentSignatoriesConfig {
   seniorCadetBattalion: string;
   seniorCadetRegiment: string;
   seniorCadetInstitution: string;
+  seniorCadetSignatureUrl?: string;
 
   // Form Provider Title & Attachments
   formProviderTitle: string;
@@ -293,10 +295,11 @@ export interface ApplicantQualification {
 }
 
 export interface ApplicantAddress {
+  division?: string;
+  district: string;
+  upazila: string;
   village: string;
   post: string;
-  upazila: string;
-  district: string;
 }
 
 export interface RecruitmentFormState {

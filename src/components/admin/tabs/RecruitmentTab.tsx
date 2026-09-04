@@ -1058,6 +1058,24 @@ export const RecruitmentTab: React.FC = () => {
                         className="japandi-input w-full"
                       />
                     </div>
+
+                    <div>
+                      <label className="font-bold block mb-1">
+                        Official Signature / Seal Image:
+                      </label>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 mb-2">
+                        Upload Platoon Commander's signature or stamp to automatically appear on the official 2-page recruitment slip.
+                      </p>
+                      <CloudinaryUploader
+                        value={signatoriesForm.countersignedSignatureUrl || ''}
+                        onChange={(url) => setSignatoriesForm({ ...signatoriesForm, countersignedSignatureUrl: url })}
+                        onUploadComplete={(url) => setSignatoriesForm({ ...signatoriesForm, countersignedSignatureUrl: url })}
+                        folder="bncc_signatures"
+                        label="Upload Commander Signature"
+                        helpText="PNG/JPG with transparent or white background"
+                        aspectRatio="banner"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1128,6 +1146,24 @@ export const RecruitmentTab: React.FC = () => {
                         onChange={(e) => setSignatoriesForm({ ...signatoriesForm, seniorCadetInstitution: e.target.value })}
                         placeholder="e.g. New Govt. Degree College, Rajshahi"
                         className="japandi-input w-full"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="font-bold block mb-1">
+                        Senior Cadet Signature Image:
+                      </label>
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 mb-2">
+                        Upload Senior Cadet's signature to appear on the official 2-page recruitment slip.
+                      </p>
+                      <CloudinaryUploader
+                        value={signatoriesForm.seniorCadetSignatureUrl || ''}
+                        onChange={(url) => setSignatoriesForm({ ...signatoriesForm, seniorCadetSignatureUrl: url })}
+                        onUploadComplete={(url) => setSignatoriesForm({ ...signatoriesForm, seniorCadetSignatureUrl: url })}
+                        folder="bncc_signatures"
+                        label="Upload Senior Cadet Signature"
+                        helpText="PNG/JPG with transparent or white background"
+                        aspectRatio="banner"
                       />
                     </div>
                   </div>

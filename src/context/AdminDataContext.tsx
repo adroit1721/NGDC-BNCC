@@ -316,12 +316,14 @@ export const DEFAULT_RECRUITMENT_SIGNATORIES: RecruitmentSignatoriesConfig = {
   countersignedRegiment: 'Mahasthan Regiment',
   countersignedTitle: 'Platoon Commander',
   countersignedInstitution: 'New Govt. Degree College, Rajshahi',
+  countersignedSignatureUrl: '',
 
   seniorCadetRankAndName: 'Cadet Sergeant Touhid',
   seniorCadetNo: '',
   seniorCadetBattalion: '31 BNCC Battalion',
   seniorCadetRegiment: 'Mahasthan Regiment',
   seniorCadetInstitution: 'New Govt. Degree College, Rajshahi',
+  seniorCadetSignatureUrl: '',
 
   formProviderTitle: 'Signature of Form Provider:',
   attachments: [

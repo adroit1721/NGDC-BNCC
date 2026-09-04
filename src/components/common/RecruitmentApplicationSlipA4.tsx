@@ -13,6 +13,31 @@ interface RecruitmentApplicationSlipA4Props {
   onClose?: () => void;
 }
 
+// Format Date of Birth as "10 Feb 2005"
+export const formatDateOfBirth = (dobStr?: string): string => {
+  if (!dobStr) return '';
+  const trimmed = dobStr.trim();
+  if (/^\d{1,2}\s+[A-Za-z]{3}\s+\d{4}$/.test(trimmed)) return trimmed;
+
+  const parts = trimmed.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    if (!isNaN(year) && !isNaN(monthIdx) && !isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return `${day} ${months[monthIdx]} ${year}`;
+    }
+  }
+
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+  return trimmed;
+};
+
 export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4Props> = ({
   applicant,
   announcement,
@@ -77,7 +102,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
         )}
       </div>
 
-      {/* Printable Wrapper */}
+      {/* Printable Wrapper - Exactly 2 Pages */}
       <div
         ref={printRef}
         id="official-recruitment-a4-document"
@@ -87,7 +112,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             PAGE 1: PERSONAL & ACADEMIC PARTICULARS (Items 1 - 19)
             ========================================================================= */}
         <div
-          className="bg-white p-8 sm:p-10 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[12mm] print:rounded-none min-h-[297mm] flex flex-col justify-between"
+          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[10mm] print:rounded-none flex flex-col justify-between"
           style={{
             pageBreakAfter: 'always',
             breakAfter: 'page',
@@ -95,8 +120,8 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
           }}
         >
           <div>
-            {/* Header: Logos & Platoon Titles */}
-            <div className="relative border-b-2 border-black pb-3 mb-4">
+            {/* Header: Logos & Platoon Titles - Isolated completely from photo box */}
+            <div className="border-b-2 border-black pb-2.5 mb-3">
               <div className="flex items-center justify-between gap-2">
                 {/* Left Logo: BNCC */}
                 <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
@@ -119,7 +144,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   <h3 className="text-xs sm:text-sm font-bold text-black">
                     New Govt. Degree College, Rajshahi
                   </h3>
-                  <div className="inline-block mt-2 px-4 py-0.5 border border-black rounded-sm bg-gray-50">
+                  <div className="inline-block mt-1.5 px-4 py-0.5 border border-black rounded-sm bg-gray-50">
                     <span className="text-xs font-black uppercase tracking-widest text-black">
                       Recruit Admission Form
                     </span>
@@ -136,89 +161,90 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Sub-bar: Serial Number & Photo Attachment Box */}
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-black">
-                  <span>Serial No:</span>
-                  <span className="font-mono px-2 py-0.5 border border-black/80 bg-gray-50 rounded-xs">
-                    {isBlank ? '....................................' : (appData.serialNo || appData.token || 'REC-2026-001')}
-                  </span>
-                </div>
+            {/* Sub-bar & Top Personal Details (Items 1 to 3) + Safe Non-Overlapping Photo Box */}
+            <div className="relative mb-2.5">
+              {/* Photo Attachment Box - Positioned safely below header, NEVER overlapping the crest logo */}
+              <div className="absolute right-0 top-0 w-24 h-28 border-2 border-dashed border-black/80 bg-gray-50 flex flex-col items-center justify-center text-center p-1 overflow-hidden z-10 shadow-xs">
+                {!isBlank && appData.avatarUrl ? (
+                  <img
+                    src={appData.avatarUrl}
+                    alt={appData.fullName || 'Candidate Photo'}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-[9px] text-gray-500">
+                    <span className="font-bold">Picture</span>
+                    <span>300 x 300</span>
+                    <span className="text-[7.5px] mt-0.5 text-gray-400 leading-tight">Attach or upload</span>
+                  </div>
+                )}
+              </div>
 
-                {/* 300 x 300 Photo Box */}
-                <div className="absolute right-0 top-18 w-24 h-28 border-2 border-dashed border-black/80 bg-gray-50 flex flex-col items-center justify-center text-center p-1 overflow-hidden z-10">
-                  {!isBlank && appData.avatarUrl ? (
-                    <img
-                      src={appData.avatarUrl}
-                      alt={appData.fullName || 'Candidate Photo'}
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-[9px] text-gray-500">
-                      <span className="font-bold">Picture</span>
-                      <span>300 x 300</span>
-                      <span className="text-[7.5px] mt-1 text-gray-400 leading-tight">Attach or upload from website</span>
+              {/* Serial Number */}
+              <div className="flex items-center gap-1.5 text-xs font-bold text-black mb-2.5">
+                <span>Serial No:</span>
+                <span className="font-mono px-2.5 py-0.5 border border-black/80 bg-gray-50 rounded-xs">
+                  {isBlank ? '....................................' : (appData.serialNo || appData.token || 'REC-2026-001')}
+                </span>
+              </div>
+
+              {/* Items 1 to 3 - Constrained width on right side so photo box fits cleanly */}
+              <div className="space-y-2.5 text-[11.5px] text-black pr-28">
+                {/* 1. Applicant's Name */}
+                <div className="space-y-1">
+                  <div className="flex items-baseline">
+                    <span className="font-bold w-44 shrink-0">1. Applicant's Name: *</span>
+                    <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
+                    <div className="flex-1">{val(appData.nameBangla, '...........................................................................')}</div>
+                  </div>
+                  <div className="flex items-baseline pl-44">
+                    <span className="text-gray-700 mr-2 shrink-0">In English (Capital):</span>
+                    <div className="flex-1 font-mono uppercase font-bold">
+                      {val(appData.nameEnglish || appData.fullName, '...................................................................')}
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Form Fields: Items 1 to 19 */}
-            <div className="space-y-2.5 text-[11.5px] text-black pr-28 sm:pr-30">
-              {/* 1. Applicant's Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold w-48 shrink-0">1. Applicant's Name: *</span>
-                  <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
-                  <div className="flex-1">{val(appData.nameBangla, '.......................................................................................')}</div>
-                </div>
-                <div className="flex items-baseline pl-48">
-                  <span className="text-gray-700 mr-2 shrink-0">In English (Capital letters):</span>
-                  <div className="flex-1 font-mono uppercase font-bold">
-                    {val(appData.nameEnglish || appData.fullName, '...........................................................................')}
                   </div>
                 </div>
-              </div>
 
-              {/* 2. Applicant's Father's Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold w-48 shrink-0">2. Applicant's Father's Name: *</span>
-                  <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
-                  <div className="flex-1">{val(appData.fatherNameBangla, '.......................................................................................')}</div>
-                </div>
-                <div className="flex items-baseline pl-48">
-                  <span className="text-gray-700 mr-2 shrink-0">In English (Capital letters):</span>
-                  <div className="flex-1 font-mono uppercase">
-                    {val(appData.fatherNameEnglish, '...........................................................................')}
+                {/* 2. Applicant's Father's Name */}
+                <div className="space-y-1">
+                  <div className="flex items-baseline">
+                    <span className="font-bold w-44 shrink-0">2. Father's Name: *</span>
+                    <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
+                    <div className="flex-1">{val(appData.fatherNameBangla, '...........................................................................')}</div>
+                  </div>
+                  <div className="flex items-baseline pl-44">
+                    <span className="text-gray-700 mr-2 shrink-0">In English (Capital):</span>
+                    <div className="flex-1 font-mono uppercase">
+                      {val(appData.fatherNameEnglish, '...................................................................')}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* 3. Applicant's Mother's Name */}
-              <div className="space-y-1">
-                <div className="flex items-baseline">
-                  <span className="font-bold w-48 shrink-0">3. Applicant's Mother's Name: *</span>
-                  <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
-                  <div className="flex-1">{val(appData.motherNameBangla, '.......................................................................................')}</div>
-                </div>
-                <div className="flex items-baseline pl-48">
-                  <span className="text-gray-700 mr-2 shrink-0">In English (Capital letters):</span>
-                  <div className="flex-1 font-mono uppercase">
-                    {val(appData.motherNameEnglish, '...........................................................................')}
+                {/* 3. Applicant's Mother's Name */}
+                <div className="space-y-1">
+                  <div className="flex items-baseline">
+                    <span className="font-bold w-44 shrink-0">3. Mother's Name: *</span>
+                    <span className="text-gray-700 mr-2 shrink-0">In Bangla:</span>
+                    <div className="flex-1">{val(appData.motherNameBangla, '...........................................................................')}</div>
+                  </div>
+                  <div className="flex items-baseline pl-44">
+                    <span className="text-gray-700 mr-2 shrink-0">In English (Capital):</span>
+                    <div className="flex-1 font-mono uppercase">
+                      {val(appData.motherNameEnglish, '...................................................................')}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Clear the photo float margin for items 4 onwards */}
-            <div className="mt-3 space-y-2.5 text-[11.5px] text-black">
+            {/* Form Fields: Items 4 to 19 (Full Width) */}
+            <div className="space-y-3 text-[11.5px] text-black pt-1">
               {/* 4. Gender */}
               <div className="flex items-center gap-6">
-                <span className="font-bold w-48 shrink-0">4. Gender:</span>
+                <span className="font-bold w-44 shrink-0">4. Gender:</span>
                 <div className="flex items-center gap-5">
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <span className={`inline-block w-3.5 h-3.5 border border-black text-center text-[10px] leading-3 font-bold ${isCheck('Male', appData.gender) ? 'bg-black text-white' : ''}`}>
@@ -243,7 +269,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
 
               {/* 5. Class */}
               <div className="flex items-center gap-4">
-                <span className="font-bold w-48 shrink-0">5. Class:</span>
+                <span className="font-bold w-44 shrink-0">5. Class:</span>
                 <div className="flex items-center gap-4 flex-wrap">
                   <label className="flex items-center gap-1.5 cursor-pointer">
                     <span className={`inline-block w-3.5 h-3.5 border border-black text-center text-[10px] leading-3 font-bold ${isCheck('11th', appData.studentClass) ? 'bg-black text-white' : ''}`}>
@@ -274,7 +300,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
 
               {/* 6. Department/Subject */}
               <div className="flex items-baseline">
-                <span className="font-bold w-48 shrink-0">6. Department/Subject:</span>
+                <span className="font-bold w-44 shrink-0">6. Department/Subject:</span>
                 <div className="flex-1">{val(appData.department, '...........................................................................................................................')}</div>
               </div>
 
@@ -294,17 +320,19 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-baseline">
                   <span className="font-bold w-28 shrink-0">9. Date of Birth:</span>
-                  <div className="flex-1">{val(appData.dateOfBirth, '................................................')}</div>
+                  <div className="flex-1 font-bold text-black">
+                    {val(formatDateOfBirth(appData.dateOfBirth), '................................................')}
+                  </div>
                 </div>
                 <div className="flex items-baseline">
                   <span className="font-bold w-24 shrink-0">10. Religion:</span>
-                  <div className="flex-1">{val(appData.religion, '................................................')}</div>
+                  <div className="flex-1 font-semibold">{val(appData.religion, '................................................')}</div>
                 </div>
               </div>
 
               {/* 11. Present Address */}
               <div className="space-y-1 pt-0.5">
-                <div className="font-bold">11. Present Address:</div>
+                <div className="font-bold">11. Present Address: *</div>
                 <div className="grid grid-cols-4 gap-2 pl-4">
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">Village/Area:</span>
@@ -316,18 +344,25 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">Upazila:</span>
-                    <span className="flex-1 truncate">{val(appData.presentAddress?.upazila, '..........................')}</span>
+                    <span className="flex-1 truncate font-semibold">{val(appData.presentAddress?.upazila, '..........................')}</span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">District:</span>
-                    <span className="flex-1 truncate">{val(appData.presentAddress?.district, '..........................')}</span>
+                    <span className="flex-1 truncate font-semibold">
+                      {val(
+                        appData.presentAddress?.district
+                          ? `${appData.presentAddress.district}${appData.presentAddress.division ? ` (${appData.presentAddress.division})` : ''}`
+                          : null,
+                        '..........................'
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
 
               {/* 12. Permanent Address */}
               <div className="space-y-1 pt-0.5">
-                <div className="font-bold">12. Permanent Address:</div>
+                <div className="font-bold">12. Permanent Address: *</div>
                 <div className="grid grid-cols-4 gap-2 pl-4">
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">Village/Area:</span>
@@ -339,11 +374,18 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">Upazila:</span>
-                    <span className="flex-1 truncate">{val(appData.permanentAddress?.upazila, '..........................')}</span>
+                    <span className="flex-1 truncate font-semibold">{val(appData.permanentAddress?.upazila, '..........................')}</span>
                   </div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-gray-700 shrink-0">District:</span>
-                    <span className="flex-1 truncate">{val(appData.permanentAddress?.district, '..........................')}</span>
+                    <span className="flex-1 truncate font-semibold">
+                      {val(
+                        appData.permanentAddress?.district
+                          ? `${appData.permanentAddress.district}${appData.permanentAddress.division ? ` (${appData.permanentAddress.division})` : ''}`
+                          : null,
+                        '..........................'
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -368,7 +410,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </div>
 
               {/* 14. Educational Qualifications (Bordered Table) */}
-              <div className="space-y-1 pt-1">
+              <div className="space-y-1 pt-0.5">
                 <div className="font-bold">14. Educational Qualifications:*</div>
                 <table className="w-full border-collapse border border-black text-center text-[10.5px]">
                   <thead>
@@ -421,7 +463,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </div>
 
               {/* 15, 16, 17: Height, Blood Group, Weight */}
-              <div className="grid grid-cols-3 gap-3 pt-1">
+              <div className="grid grid-cols-3 gap-3 pt-0.5">
                 <div className="flex items-baseline">
                   <span className="font-bold w-18 shrink-0">15. Height:</span>
                   <div className="flex-1 font-bold">
@@ -445,29 +487,33 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                 </div>
               </div>
 
-              {/* 18. Chest Measurement */}
-              <div className="flex items-baseline gap-6">
-                <span className="font-bold shrink-0">18. Chest Measurement:</span>
+              {/* 18. Chest (Normal / Expanded) in inch */}
+              <div className="flex items-baseline gap-6 pt-0.5">
+                <span className="font-bold shrink-0">18. Chest (Normal / Expanded) in inch:</span>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-gray-700">Normal:</span>
-                  <span className="font-bold">{val(appData.chestNormal, '..............................')}</span>
+                  <span className="text-gray-700 font-medium">Normal:</span>
+                  <span className="font-bold">
+                    {val(appData.chestNormal ? `${appData.chestNormal} inch` : null, '....................')}
+                  </span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-gray-700">Expanded:</span>
-                  <span className="font-bold">{val(appData.chestExpanded, '..............................')}</span>
+                  <span className="text-gray-700 font-medium">Expanded:</span>
+                  <span className="font-bold">
+                    {val(appData.chestExpanded ? `${appData.chestExpanded} inch` : null, '....................')}
+                  </span>
                 </div>
               </div>
 
               {/* 19. Additional Skills */}
-              <div className="flex items-baseline">
+              <div className="flex items-baseline pt-0.5">
                 <span className="font-bold w-36 shrink-0">19. Additional Skills:</span>
                 <div className="flex-1">{val(appData.additionalSkills || appData.reason, '...........................................................................................................................')}</div>
               </div>
             </div>
           </div>
 
-          {/* Page 1 Bottom Marker */}
-          <div className="pt-4 border-t border-gray-300 flex items-center justify-between text-[9px] text-gray-500 font-mono">
+          {/* Page 1 Bottom Marker - Natural flow without artificial gap */}
+          <div className="pt-3 mt-4 border-t border-gray-300 flex items-center justify-between text-[9px] text-gray-500 font-mono">
             <span>Official BNCC Recruitment Enrolment Document</span>
             <span>Page 1 of 2</span>
           </div>
@@ -477,14 +523,14 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             PAGE 2: PLEDGE, GUARDIAN CONSENT & SIGNATORIES
             ========================================================================= */}
         <div
-          className="bg-white p-8 sm:p-10 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[12mm] print:rounded-none min-h-[297mm] flex flex-col justify-between"
+          className="bg-white p-6 sm:p-9 my-4 shadow-2xl rounded-sm border border-[#d8d2be] print:border-none print:shadow-none print:m-0 print:p-[10mm] print:rounded-none flex flex-col justify-between"
           style={{
             pageBreakBefore: 'always',
             breakBefore: 'page',
             boxSizing: 'border-box',
           }}
         >
-          <div className="space-y-6">
+          <div className="space-y-5">
             {/* Top Mini Header */}
             <div className="text-center border-b border-black/40 pb-2">
               <span className="text-[11px] font-bold tracking-wider uppercase text-black">
@@ -493,7 +539,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             </div>
 
             {/* SECTION 20: PLEDGE */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h2 className="text-center text-sm font-black uppercase tracking-widest text-black underline">
                 Pledge
               </h2>
@@ -505,7 +551,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </p>
 
               {/* Applicant Signature Lines */}
-              <div className="flex items-end justify-between pt-10 px-4">
+              <div className="flex items-end justify-between pt-8 px-4">
                 <div className="space-y-1">
                   <div className="text-[11px] font-medium">
                     Date: <span className="font-mono">{isBlank ? '....................................' : (appData.appliedAt?.split(' ')[0] || new Date().toLocaleDateString('en-GB'))}</span>
@@ -523,7 +569,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
             <div className="border-t-2 border-black/20 my-2" />
 
             {/* SECTION 21: GUARDIAN'S CONSENT LETTER */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h2 className="text-center text-sm font-black uppercase tracking-widest text-black underline">
                 Guardian's Consent Letter
               </h2>
@@ -535,7 +581,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </p>
 
               {/* Guardian Signature Lines */}
-              <div className="flex items-end justify-between pt-10 px-4">
+              <div className="flex items-end justify-between pt-8 px-4">
                 <div className="space-y-1">
                   <div className="text-[11px] font-medium">
                     Date: <span className="font-mono">....................................</span>
@@ -550,13 +596,13 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
               </div>
             </div>
 
-            <div className="border-t-2 border-black my-4" />
+            <div className="border-t-2 border-black my-3" />
 
-            {/* 3-COLUMN OFFICIAL SIGNATORIES */}
-            <div className="pt-2">
+            {/* 3-COLUMN OFFICIAL SIGNATORIES - With uploaded signature pictures */}
+            <div className="pt-1">
               <div className="grid grid-cols-3 gap-3 text-center text-[11px] leading-snug">
                 {/* Column 1: Signature of Form Provider */}
-                <div className="flex flex-col justify-end items-center h-40 pb-1">
+                <div className="flex flex-col justify-end items-center h-36 pb-1">
                   <div className="border-t border-black w-full pt-1.5 font-bold text-black">
                     {sig.formProviderTitle || 'Signature of Form Provider:'}
                   </div>
@@ -565,41 +611,67 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   </div>
                 </div>
 
-                {/* Column 2: Countersigned (Platoon Commander) */}
-                <div className="flex flex-col justify-end items-center h-40 pb-1 border-x border-gray-200 px-2">
-                  <div className="border-t border-black w-full pt-1.5 text-black">
-                    <span className="font-black block uppercase text-[11px] mb-0.5">Countersigned:</span>
+                {/* Column 2: Countersigned Authority (Platoon Commander) */}
+                <div className="flex flex-col justify-end items-center h-36 pb-1 border-x border-gray-200 px-2">
+                  {/* Uploaded Platoon Commander Signature Image if available */}
+                  {sig.countersignedSignatureUrl ? (
+                    <div className="h-12 w-full flex items-center justify-center mb-1">
+                      <img
+                        src={sig.countersignedSignatureUrl}
+                        alt="Countersigned Authority Signature"
+                        className="max-h-12 max-w-[130px] object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-8" />
+                  )}
+                  <div className="border-t border-black w-full pt-1 text-black">
+                    <span className="font-black block uppercase text-[10.5px] mb-0.5">Countersigned:</span>
                     <span className="font-bold block text-xs">{sig.countersignedName || 'PUO Md. Abdul Matin'}</span>
-                    <span className="block font-mono text-[10.5px]">{sig.countersignedPNo || 'P-8193'}</span>
-                    <span className="block text-[10.5px]">{sig.countersignedBattalion || '31 BNCC Battalion'}</span>
-                    <span className="block text-[10.5px]">{sig.countersignedRegiment || 'Mahasthan Regiment'}</span>
-                    <span className="font-semibold block text-[10.5px]">{sig.countersignedTitle || 'Platoon Commander'}</span>
-                    <span className="block text-[10px] text-gray-700">{sig.countersignedInstitution || 'New Govt. Degree College, Rajshahi'}</span>
+                    <span className="block font-mono text-[10px]">{sig.countersignedPNo || 'P-8193'}</span>
+                    <span className="block text-[10px]">{sig.countersignedBattalion || '31 BNCC Battalion'}</span>
+                    <span className="block text-[10px]">{sig.countersignedRegiment || 'Mahasthan Regiment'}</span>
+                    <span className="font-semibold block text-[10px]">{sig.countersignedTitle || 'Platoon Commander'}</span>
+                    <span className="block text-[9px] text-gray-700">{sig.countersignedInstitution || 'New Govt. Degree College, Rajshahi'}</span>
                   </div>
                 </div>
 
                 {/* Column 3: Signature of Platoon Senior Cadet */}
-                <div className="flex flex-col justify-end items-center h-40 pb-1">
-                  <div className="border-t border-black w-full pt-1.5 text-black">
-                    <span className="font-black block uppercase text-[10.5px] mb-0.5 leading-tight">
+                <div className="flex flex-col justify-end items-center h-36 pb-1">
+                  {/* Uploaded Senior Cadet Signature Image if available */}
+                  {sig.seniorCadetSignatureUrl ? (
+                    <div className="h-12 w-full flex items-center justify-center mb-1">
+                      <img
+                        src={sig.seniorCadetSignatureUrl}
+                        alt="Platoon Senior Cadet Signature"
+                        className="max-h-12 max-w-[130px] object-contain"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-8" />
+                  )}
+                  <div className="border-t border-black w-full pt-1 text-black">
+                    <span className="font-black block uppercase text-[10px] mb-0.5 leading-tight">
                       Signature of Platoon Senior Cadet:
                     </span>
-                    <span className="font-bold block text-xs mt-1">{sig.seniorCadetRankAndName || 'Cadet Sergeant Touhid'}</span>
-                    {sig.seniorCadetNo ? <span className="block font-mono text-[10.5px]">{sig.seniorCadetNo}</span> : null}
-                    <span className="block text-[10.5px]">{sig.seniorCadetBattalion || '31 BNCC Battalion'}</span>
-                    <span className="block text-[10.5px]">{sig.seniorCadetRegiment || 'Mahasthan Regiment'}</span>
-                    <span className="block text-[10px] text-gray-700">{sig.seniorCadetInstitution || 'New Govt. Degree College, Rajshahi'}</span>
+                    <span className="font-bold block text-xs mt-0.5">{sig.seniorCadetRankAndName || 'Cadet Sergeant Touhid'}</span>
+                    {sig.seniorCadetNo ? <span className="block font-mono text-[10px]">{sig.seniorCadetNo}</span> : null}
+                    <span className="block text-[10px]">{sig.seniorCadetBattalion || '31 BNCC Battalion'}</span>
+                    <span className="block text-[10px]">{sig.seniorCadetRegiment || 'Mahasthan Regiment'}</span>
+                    <span className="block text-[9px] text-gray-700">{sig.seniorCadetInstitution || 'New Govt. Degree College, Rajshahi'}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* ATTACHMENTS NOTICE BOX */}
-            <div className="mt-6 border-2 border-dashed border-black/70 p-3.5 bg-gray-50/80 rounded-sm">
+            <div className="mt-4 border-2 border-dashed border-black/70 p-3 bg-gray-50/80 rounded-sm">
               <span className="font-black text-xs uppercase tracking-wide block text-black mb-1">
                 Attachments: Must attach the below documents with the form.
               </span>
-              <ol className="list-decimal list-inside space-y-1 text-[11px] text-black font-medium pl-1">
+              <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-black font-medium pl-1">
                 {sig.attachments && sig.attachments.length > 0 ? (
                   sig.attachments.map((att, i) => <li key={i}>{att}</li>)
                 ) : (
@@ -614,7 +686,7 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
           </div>
 
           {/* Page 2 Bottom Marker */}
-          <div className="pt-4 border-t border-gray-300 flex items-center justify-between text-[9px] text-gray-500 font-mono">
+          <div className="pt-3 mt-4 border-t border-gray-300 flex items-center justify-between text-[9px] text-gray-500 font-mono">
             <span>Bangladesh National Cadet Corps • NGDC Platoon</span>
             <span>Page 2 of 2</span>
           </div>
@@ -623,3 +695,4 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
     </div>
   );
 };
+
