@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Shield,
   Printer,
@@ -25,7 +24,6 @@ import { RecruitmentFormState, RecruitmentApplicant, ApplicantAddress, Applicant
 import { RecruitmentApplicationSlipA4, formatDateOfBirth } from './common/RecruitmentApplicationSlipA4';
 import { BANGLADESH_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict } from '../data/bangladeshGeoData';
 import { ASSETS } from '../data/bnccData';
-import { framerSectionVariants, framerPopItemVariants, scrollViewportConfig } from '../utils/motionVariants';
 
 interface RecruitmentViewProps {
   setActiveTab?: (tab: TabType) => void;
@@ -342,10 +340,7 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
   return (
     <div className={`min-h-screen py-8 sm:py-12 px-4 sm:px-6 max-w-[1180px] mx-auto space-y-10 main-app-content ${showSlip ? 'print:hidden' : ''}`}>
       {/* 1. HERO & RECRUITMENT BANNER */}
-      <motion.section
-        variants={framerSectionVariants}
-        initial="hidden"
-        animate="visible"
+      <section
         className="japandi-card bg-[#fcf9f3] dark:bg-[#1b1a17] border border-[#cdc6b3]/70 dark:border-[#38342c] p-6 sm:p-10 rounded-3xl relative overflow-hidden shadow-xs"
       >
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-6 relative z-10">
@@ -436,7 +431,6 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
 
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 relative">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isWindowActive ? 'bg-emerald-400' : 'bg-red-400'}`} />
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isWindowActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
             </span>
             <span className="text-xs font-bold text-[#1c1c18] dark:text-[#fcfbf7]">
@@ -444,13 +438,11 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
             </span>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* 2. SUCCESS STATE (IF JUST SUBMITTED) */}
       {formSubmitted && submittedApplicant && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+        <div
           className="japandi-card bg-emerald-50/80 dark:bg-emerald-950/30 border-2 border-emerald-500/60 p-6 sm:p-8 rounded-3xl space-y-5"
         >
           <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
@@ -505,16 +497,12 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
               </button>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* 3. MAIN FORM */}
       {!formSubmitted && (
-        <motion.div
-          variants={framerSectionVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={scrollViewportConfig}
+        <div
           className="bg-[#fbf9f4] dark:bg-[#181714] border border-[#d6cebf] dark:border-[#38342c] p-4 sm:p-7 md:p-9 rounded-3xl shadow-sm space-y-6 sm:space-y-8"
         >
           <div className="border-b border-[#cdc6b3]/60 dark:border-[#38342c] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1399,7 +1387,7 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
                 <button
                   id="btn-submit-recruitment-form"
                   type="submit"
-                  className="japandi-btn-primary py-3 px-7 text-sm font-bold w-full sm:w-auto text-center shadow-md hover:scale-102 transition-transform"
+                  className="japandi-btn-primary py-3 px-7 text-sm font-bold w-full sm:w-auto text-center shadow-md active:scale-98"
                 >
                   <span>Submit & Generate Form</span>
                   <ArrowRight className="w-4 h-4 ml-1.5 inline" />
@@ -1407,20 +1395,14 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
               </div>
             </div>
           </form>
-        </motion.div>
+        </div>
       )}
 
       {/* 4. APPLICATION STATUS SEARCH DRAWER / MODAL */}
-      <AnimatePresence>
-        {showStatusSearch && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#fcf9f3] dark:bg-[#1e1d19] border border-[#cdc6b3] dark:border-[#423e35] rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl"
-            >
-              <div className="flex items-center justify-between border-b border-[#cdc6b3] dark:border-[#423e35] pb-3">
+      {showStatusSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-[#fcf9f3] dark:bg-[#1e1d19] border border-[#cdc6b3] dark:border-[#423e35] rounded-3xl max-w-lg w-full p-6 sm:p-8 space-y-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#cdc6b3] dark:border-[#423e35] pb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-[#eedc82]/50 text-[#6b5e10] dark:text-[#eedc82] rounded-xl">
                     <Search className="w-5 h-5" />
@@ -1508,10 +1490,9 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
                   )}
                 </div>
               )}
-            </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       {/* 5. PRINTABLE 2-PAGE APPLICATION SLIP (MODAL / PRINT VIEW) */}
       {showSlip && (
