@@ -195,18 +195,6 @@ export const CadetsCornerView: React.FC<CadetsCornerProps> = ({
     }
   };
 
-  // Quick Demo Login Handler
-  const handleQuickLogin = (cadetNo: string) => {
-    const cadet = SAMPLE_CADETS[cadetNo];
-    if (cadet) {
-      setCurrentCadet(cadet);
-      setIsLoggedIn(true);
-      sessionStorage.setItem('ngdc_bncc_cadet_auth', 'true');
-      sessionStorage.setItem('ngdc_bncc_cadet_data', JSON.stringify(cadet));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   // Handle Cadet Registration via Form Builder fields
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,42 +499,6 @@ export const CadetsCornerView: React.FC<CadetsCornerProps> = ({
                   <LogIn className="w-4 h-4" />
                   <span>Log In to Cadet Portal</span>
                 </button>
-
-                {/* Quick One-Click Demo Access Box */}
-                <div className="pt-4 border-t border-[#cdc6b3]/50 dark:border-[#423e35] space-y-2.5">
-                  <div className="flex items-center justify-between text-[11px] text-[#7c7767] dark:text-[#aca596]">
-                    <span className="font-semibold uppercase tracking-wider">Quick Demo Cadets:</span>
-                    <span>Click to auto-fill & login</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleQuickLogin('NGDC-2024-042')}
-                      className="p-2.5 text-left bg-[#f6f3ed] dark:bg-[#191815] hover:bg-[#eedc82]/30 border border-[#cdc6b3]/60 dark:border-[#464237] rounded-xl text-[11px] transition-all cursor-pointer"
-                    >
-                      <strong className="block text-[#1c1c18] dark:text-[#fcfbf7] truncate">Hasan Mahmud</strong>
-                      <span className="text-[#6b5e10] dark:text-[#eedc82] font-mono text-[10px]">CUO • Male</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleQuickLogin('NGDC-2024-088')}
-                      className="p-2.5 text-left bg-[#f6f3ed] dark:bg-[#191815] hover:bg-[#eedc82]/30 border border-[#cdc6b3]/60 dark:border-[#464237] rounded-xl text-[11px] transition-all cursor-pointer"
-                    >
-                      <strong className="block text-[#1c1c18] dark:text-[#fcfbf7] truncate">Sumaiya Akter</strong>
-                      <span className="text-[#6b5e10] dark:text-[#eedc82] font-mono text-[10px]">Sgt • Female</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleQuickLogin('NGDC-2024-105')}
-                      className="p-2.5 text-left bg-[#f6f3ed] dark:bg-[#191815] hover:bg-[#eedc82]/30 border border-[#cdc6b3]/60 dark:border-[#464237] rounded-xl text-[11px] transition-all cursor-pointer"
-                    >
-                      <strong className="block text-[#1c1c18] dark:text-[#fcfbf7] truncate">Tariqul Karim</strong>
-                      <span className="text-[#6b5e10] dark:text-[#eedc82] font-mono text-[10px]">Cpl • Band</span>
-                    </button>
-                  </div>
-                </div>
               </motion.form>
             )}
 
