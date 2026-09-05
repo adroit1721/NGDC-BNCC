@@ -51,6 +51,8 @@ export default function App() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
       localStorage.removeItem('ngdc_bncc_theme');
     }
   }, []);

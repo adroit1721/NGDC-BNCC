@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
+    color-scheme: light only;
     --bg-main: #fcf9f3;
     --bg-surface: #f6f3ed;
     --bg-card: #fcf9f3;
@@ -12,6 +15,15 @@
     --accent-gold: #eedc82;
     --accent-gold-hover: #e5d16d;
     --accent-dark: #6b5e10;
+  }
+
+  html,
+  body {
+    color-scheme: light only;
+    background-color: #fcf9f3;
+    color: #1c1c18;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   html.dark,
@@ -26,14 +38,6 @@
     --accent-gold: #f2e28a;
     --accent-gold-hover: #faec9c;
     --accent-dark: #ffd84d;
-    color-scheme: dark;
-  }
-
-  body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
