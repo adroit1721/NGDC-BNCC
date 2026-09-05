@@ -4,8 +4,6 @@ import { AdminMenuKey } from '../../types';
 import {
   Shield,
   ExternalLink,
-  Sun,
-  Moon,
   KeyRound,
   LogOut,
   User,
@@ -21,8 +19,8 @@ interface AdminHeaderProps {
   onReturnToPublic?: () => void;
   onViewPublicSite?: () => void;
   onLogout?: () => void;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
   onToggleMobileMenu?: () => void;
 }
 
@@ -153,15 +151,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         >
           <ExternalLink className="w-3.5 h-3.5 text-[#6b5e10] dark:text-[#eedc82]" />
           <span className="hidden md:inline">View Public Website</span>
-        </button>
-
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={onToggleDarkMode}
-          className="p-2 rounded-xl bg-[#f6f3ed] dark:bg-[#23211c] border border-[#cdc6b3]/60 dark:border-[#423e35] text-[#1c1c18] dark:text-[#fcfbf7] hover:bg-[#eedc82]/30 transition-colors cursor-pointer"
-          aria-label="Toggle Theme"
-        >
-          {isDarkMode ? <Sun className="w-4 h-4 text-[#eedc82]" /> : <Moon className="w-4 h-4 text-[#6b5e10]" />}
         </button>
 
         {/* Top Right Corner Profile Avatar */}

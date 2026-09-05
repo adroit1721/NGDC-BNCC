@@ -45,29 +45,15 @@ export default function App() {
     return false;
   });
 
-  // Dark mode state
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('ngdc_bncc_theme');
-      if (saved) return saved === 'dark';
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  // Default light theme (dark mode button removed)
+  const isDarkMode = false;
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('ngdc_bncc_theme', 'dark');
-    } else {
+    if (typeof window !== 'undefined') {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('ngdc_bncc_theme', 'light');
+      localStorage.removeItem('ngdc_bncc_theme');
     }
-  }, [isDarkMode]);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-  };
+  }, []);
 
   // Modals state
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -119,15 +105,14 @@ export default function App() {
           setIsAdminAuthenticated(false);
         }}
         isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
       />
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-[#eedc82] selection:text-[#1c1c18] transition-colors duration-300 relative ${isDarkMode ? 'dark bg-[#141311] text-[#fbf9f4]' : 'bg-[#fcf9f3] text-[#1c1c18]'}`}>
-      {/* Topographic Contours + Ambient Twilight Glow Background */}
-      <TopographicBackground isDarkMode={isDarkMode} />
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[#eedc82] selection:text-[#1c1c18] bg-[#fcf9f3] text-[#1c1c18] relative">
+      {/* Topographic Contours Background */}
+      <TopographicBackground isDarkMode={false} />
 
       {/* Top Header with 2 Side Logos & Centered College Text */}
       <Header
@@ -135,8 +120,6 @@ export default function App() {
           setActiveTab('home');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Parallax Sticky Navigation Menu */}

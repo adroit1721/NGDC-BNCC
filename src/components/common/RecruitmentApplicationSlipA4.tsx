@@ -558,16 +558,16 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                   <tr className="h-8 border-b border-black">
                     <td className="border border-black font-bold p-1">SSC / Dakhil / Equiv.</td>
                     <td className="border border-black p-1 font-medium">
-                      {!isBlank && appData.qualifications?.[0]?.divisionOrGroup ? appData.qualifications[0].divisionOrGroup : 'Science'}
+                      {!isBlank ? (appData.qualifications?.[0]?.divisionOrGroup || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-mono">
-                      {!isBlank && appData.qualifications?.[0]?.passingYear ? appData.qualifications[0].passingYear : '2022'}
+                      {!isBlank ? (appData.qualifications?.[0]?.passingYear || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-mono font-bold text-xs">
-                      {!isBlank && appData.qualifications?.[0]?.gpa ? appData.qualifications[0].gpa : '4.00'}
+                      {!isBlank ? (appData.qualifications?.[0]?.gpa || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-medium">
-                      {!isBlank && appData.qualifications?.[0]?.board ? appData.qualifications[0].board : 'Rajshahi'}
+                      {!isBlank ? (appData.qualifications?.[0]?.board || '') : ''}
                     </td>
                   </tr>
                   {/* Row 2: HSC */}
@@ -576,16 +576,16 @@ export const RecruitmentApplicationSlipA4: React.FC<RecruitmentApplicationSlipA4
                       <span className="font-bold">HSC / Alim / Equiv.</span>
                     </td>
                     <td className="border border-black p-1 font-medium">
-                      {!isBlank && appData.qualifications?.[1]?.divisionOrGroup ? appData.qualifications[1].divisionOrGroup : (appData.studentClass?.includes('Honours') ? 'Science' : '')}
+                      {!isBlank ? (appData.qualifications?.[1]?.divisionOrGroup || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-mono">
-                      {!isBlank && appData.qualifications?.[1]?.passingYear ? appData.qualifications[1].passingYear : (appData.studentClass?.includes('Honours') ? '2024' : '')}
+                      {!isBlank ? (appData.qualifications?.[1]?.passingYear || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-mono font-bold text-xs">
-                      {!isBlank && appData.qualifications?.[1]?.gpa ? appData.qualifications[1].gpa : (appData.studentClass?.includes('Honours') ? '4.98' : '')}
+                      {!isBlank ? (appData.qualifications?.[1]?.gpa || '') : ''}
                     </td>
                     <td className="border border-black p-1 font-medium">
-                      {!isBlank && appData.qualifications?.[1]?.board ? appData.qualifications[1].board : (appData.studentClass?.includes('Honours') ? 'Rajshahi' : '')}
+                      {!isBlank ? (appData.qualifications?.[1]?.board || '') : ''}
                     </td>
                   </tr>
                   {/* Row 3: Graduation / Other */}

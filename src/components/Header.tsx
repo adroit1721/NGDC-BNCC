@@ -2,18 +2,16 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ASSETS } from '../data/bnccData';
 import { TabType } from '../types';
-import { Shield, Sun, Moon, Sparkles } from 'lucide-react';
+import { Shield, Sparkles } from 'lucide-react';
 
 interface HeaderProps {
   onNavigateHome: () => void;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
-  isDarkMode,
-  onToggleDarkMode,
 }) => {
   return (
     <header className="max-w-[1120px] mx-auto px-3 sm:px-4 w-full pt-2.5 pb-1">
@@ -76,23 +74,6 @@ export const Header: React.FC<HeaderProps> = ({
               referrerPolicy="no-referrer"
             />
           </motion.div>
-        </div>
-
-        {/* Corner Theme Toggle */}
-        <div className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-3 z-20">
-          <button
-            id="btn-header-theme-toggle"
-            onClick={onToggleDarkMode}
-            title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
-            className="p-1 sm:p-1.5 rounded-full border border-[#cdc6b3]/60 dark:border-[#444036] bg-white/70 dark:bg-black/50 text-[#1c1c18] dark:text-[#eedc82] hover:bg-[#eedc82]/30 hover:scale-110 transition-all cursor-pointer shadow-2xs flex items-center justify-center active:scale-95"
-            aria-label="Toggle Dark Mode"
-          >
-            {isDarkMode ? (
-              <Sun className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#eedc82]" />
-            ) : (
-              <Moon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#4a4738]" />
-            )}
-          </button>
         </div>
       </motion.div>
     </header>

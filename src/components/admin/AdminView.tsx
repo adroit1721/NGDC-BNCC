@@ -18,14 +18,14 @@ import { FooterTab } from './tabs/FooterTab';
 interface AdminViewProps {
   onLogout: () => void;
   onViewPublicSite: () => void;
-  isDarkMode: boolean;
-  onToggleDarkMode: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 export const AdminView: React.FC<AdminViewProps> = ({
   onLogout,
   onViewPublicSite,
-  isDarkMode,
+  isDarkMode = false,
   onToggleDarkMode,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminMenuKey>('home');

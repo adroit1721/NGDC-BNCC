@@ -797,3 +797,26 @@ export const getDivisionByDistrict = (district: string): string => {
   }
   return '';
 };
+
+// All Official Bangladeshi Education Boards
+export const BANGLADESH_EDUCATION_BOARDS = [
+  'Dhaka',
+  'Rajshahi',
+  'Cumilla',
+  'Jashore',
+  'Chattogram',
+  'Barishal',
+  'Sylhet',
+  'Dinajpur',
+  'Mymensingh',
+  'Madrasah',
+  'Technical',
+] as const;
+
+// Division / Group Options for Secondary & Higher Secondary
+export const DIVISION_GROUP_OPTIONS = [
+  'Science',
+  'Humanities',
+  'Business Studies',
+] as const;
+

@@ -22,8 +22,21 @@ import {
 import { useAdminData } from '../context/AdminDataContext';
 import { RecruitmentFormState, RecruitmentApplicant, ApplicantAddress, ApplicantQualification, TabType } from '../types';
 import { RecruitmentApplicationSlipA4, formatDateOfBirth } from './common/RecruitmentApplicationSlipA4';
-import { BANGLADESH_DIVISIONS, getDistrictsByDivision, getUpazilasByDistrict } from '../data/bangladeshGeoData';
+import {
+  BANGLADESH_DIVISIONS,
+  getDistrictsByDivision,
+  getUpazilasByDistrict,
+  BANGLADESH_EDUCATION_BOARDS,
+  DIVISION_GROUP_OPTIONS,
+} from '../data/bangladeshGeoData';
 import { ASSETS } from '../data/bnccData';
+
+// Generate passing years list from current year down to 2000
+const CURRENT_YEAR = new Date().getFullYear();
+const PASSING_YEARS: number[] = Array.from(
+  { length: CURRENT_YEAR - 2000 + 1 },
+  (_, i) => CURRENT_YEAR - i
+);
 
 interface RecruitmentViewProps {
   setActiveTab?: (tab: TabType) => void;
@@ -1072,7 +1085,7 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
               </div>
             </div>
 
-            {/* 14. Educational Qualifications Card (Table) */}
+            {/* 14. Educational Qualifications Card (Fully Responsive - Zero Horizontal Scrolling) */}
             <div className="bg-white dark:bg-[#1f1e1a] p-4 sm:p-6 rounded-2xl border border-[#dcd6c8] dark:border-[#3a352b] shadow-xs space-y-4">
               <div className="border-b border-[#cdc6b3]/50 dark:border-[#38342c] pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <h3 className="font-bold text-sm text-[#1c1c18] dark:text-[#fcfbf7] flex items-center gap-2">
@@ -1082,111 +1095,193 @@ export const RecruitmentView: React.FC<RecruitmentViewProps> = ({ setActiveTab }
                 <span className="text-[11px] text-gray-500 dark:text-gray-400">SSC required, HSC for degree/honours</span>
               </div>
 
-              <div className="sm:hidden text-[10px] text-[#6b5e10] dark:text-[#eedc82] flex items-center gap-1 font-medium pb-1">
-                <span>👉 Swipe table sideways to see all qualification fields</span>
-              </div>
+              <div className="space-y-4">
+                {/* SSC Qualification Section */}
+                <div className="p-3.5 sm:p-4 rounded-xl border border-[#dcd6c8] dark:border-[#38342c] bg-[#faf8f4] dark:bg-[#171613] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#6b5e10] text-white text-xs font-bold font-mono">
+                        SSC
+                      </span>
+                      <span className="font-bold text-xs sm:text-sm text-[#1c1c18] dark:text-[#fcfbf7]">
+                        Secondary School Certificate / Dakhil / Equivalent
+                      </span>
+                      <span className="text-red-500 font-bold">*</span>
+                    </div>
+                    <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-200 dark:border-red-900/50">
+                      Required
+                    </span>
+                  </div>
 
-              <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
-                <table className="w-full min-w-[550px] text-left border border-[#cdc6b3]/80 dark:border-[#38342c] rounded-xl overflow-hidden">
-                  <thead className="bg-[#f2efe9] dark:bg-[#25231c] text-[#1c1c18] dark:text-[#fcfbf7] font-bold">
-                    <tr>
-                      <th className="p-2.5 border-b border-[#cdc6b3]/80 dark:border-[#38342c] w-24">Exam Name</th>
-                      <th className="p-2.5 border-b border-[#cdc6b3]/80 dark:border-[#38342c]">Division / Group</th>
-                      <th className="p-2.5 border-b border-[#cdc6b3]/80 dark:border-[#38342c] w-28">Passing Year</th>
-                      <th className="p-2.5 border-b border-[#cdc6b3]/80 dark:border-[#38342c] w-28">GPA Obtained</th>
-                      <th className="p-2.5 border-b border-[#cdc6b3]/80 dark:border-[#38342c] w-32">Board</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#cdc6b3]/60 dark:divide-[#38342c] bg-white dark:bg-[#1b1a17]">
-                    {/* Row 1: SSC */}
-                    <tr>
-                      <td className="p-2.5 font-bold">
-                        <span>SSC</span>
-                        <span className="text-red-500 ml-0.5">*</span>
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[0]?.divisionOrGroup || ''}
-                          onChange={(e) => handleQualificationChange(0, 'divisionOrGroup', e.target.value)}
-                          placeholder="e.g. Science / Arts / Com"
-                          className="japandi-input w-full py-1.5 text-xs bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[0]?.passingYear || ''}
-                          onChange={(e) => handleQualificationChange(0, 'passingYear', e.target.value)}
-                          placeholder="e.g. 2024"
-                          className="japandi-input w-full py-1.5 text-xs font-mono bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[0]?.gpa || ''}
-                          onChange={(e) => handleQualificationChange(0, 'gpa', e.target.value)}
-                          placeholder="e.g. 5.00"
-                          className="japandi-input w-full py-1.5 text-xs font-mono font-bold bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[0]?.board || ''}
-                          onChange={(e) => handleQualificationChange(0, 'board', e.target.value)}
-                          placeholder="e.g. Rajshahi"
-                          className="japandi-input w-full py-1.5 text-xs bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                    </tr>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* 1. Division / Group */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Division / Group <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.qualifications?.[0]?.divisionOrGroup || ''}
+                        onChange={(e) => handleQualificationChange(0, 'divisionOrGroup', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a]"
+                      >
+                        <option value="">Select Division / Group</option>
+                        {DIVISION_GROUP_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                    {/* Row 2: HSC (For Honours students) */}
-                    <tr>
-                      <td className="p-2.5">
-                        <span className="font-bold block">HSC</span>
-                        <span className="text-[10px] text-gray-500 block">(If applicable)</span>
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[1]?.divisionOrGroup || ''}
-                          onChange={(e) => handleQualificationChange(1, 'divisionOrGroup', e.target.value)}
-                          placeholder="e.g. Science"
-                          className="japandi-input w-full py-1.5 text-xs bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[1]?.passingYear || ''}
-                          onChange={(e) => handleQualificationChange(1, 'passingYear', e.target.value)}
-                          placeholder="e.g. 2024"
-                          className="japandi-input w-full py-1.5 text-xs font-mono bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[1]?.gpa || ''}
-                          onChange={(e) => handleQualificationChange(1, 'gpa', e.target.value)}
-                          placeholder="e.g. 4.80"
-                          className="japandi-input w-full py-1.5 text-xs font-mono bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                      <td className="p-2">
-                        <input
-                          type="text"
-                          value={formData.qualifications?.[1]?.board || ''}
-                          onChange={(e) => handleQualificationChange(1, 'board', e.target.value)}
-                          placeholder="e.g. Rajshahi"
-                          className="japandi-input w-full py-1.5 text-xs bg-white dark:bg-[#181714]"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                    {/* 2. Passing Year */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Passing Year <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.qualifications?.[0]?.passingYear || ''}
+                        onChange={(e) => handleQualificationChange(0, 'passingYear', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a] font-mono"
+                      >
+                        <option value="">Select Year</option>
+                        {PASSING_YEARS.map((yr) => (
+                          <option key={yr} value={yr.toString()}>
+                            {yr}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 3. GPA Obtained */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        GPA Obtained <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="1.00"
+                        max="5.00"
+                        value={formData.qualifications?.[0]?.gpa || ''}
+                        onChange={(e) => handleQualificationChange(0, 'gpa', e.target.value)}
+                        placeholder="e.g. 5.00"
+                        className="japandi-input w-full py-2 px-3 text-xs font-mono font-bold bg-white dark:bg-[#1f1e1a]"
+                      />
+                    </div>
+
+                    {/* 4. Education Board */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Education Board <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.qualifications?.[0]?.board || ''}
+                        onChange={(e) => handleQualificationChange(0, 'board', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a]"
+                      >
+                        <option value="">Select Board</option>
+                        {BANGLADESH_EDUCATION_BOARDS.map((board) => (
+                          <option key={board} value={board}>
+                            {board}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HSC Qualification Section */}
+                <div className="p-3.5 sm:p-4 rounded-xl border border-[#dcd6c8] dark:border-[#38342c] bg-[#faf8f4] dark:bg-[#171613] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#6b5e10]/20 text-[#6b5e10] dark:text-[#eedc82] text-xs font-bold font-mono">
+                        HSC
+                      </span>
+                      <span className="font-bold text-xs sm:text-sm text-[#1c1c18] dark:text-[#fcfbf7]">
+                        Higher Secondary Certificate / Alim / Equivalent
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
+                      If applicable (Degree / Honours)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {/* 1. Division / Group */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Division / Group
+                      </label>
+                      <select
+                        value={formData.qualifications?.[1]?.divisionOrGroup || ''}
+                        onChange={(e) => handleQualificationChange(1, 'divisionOrGroup', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a]"
+                      >
+                        <option value="">Select Division / Group</option>
+                        {DIVISION_GROUP_OPTIONS.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 2. Passing Year */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Passing Year
+                      </label>
+                      <select
+                        value={formData.qualifications?.[1]?.passingYear || ''}
+                        onChange={(e) => handleQualificationChange(1, 'passingYear', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a] font-mono"
+                      >
+                        <option value="">Select Year</option>
+                        {PASSING_YEARS.map((yr) => (
+                          <option key={yr} value={yr.toString()}>
+                            {yr}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 3. GPA Obtained */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        GPA Obtained
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="1.00"
+                        max="5.00"
+                        value={formData.qualifications?.[1]?.gpa || ''}
+                        onChange={(e) => handleQualificationChange(1, 'gpa', e.target.value)}
+                        placeholder="e.g. 4.80"
+                        className="japandi-input w-full py-2 px-3 text-xs font-mono font-bold bg-white dark:bg-[#1f1e1a]"
+                      />
+                    </div>
+
+                    {/* 4. Education Board */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 dark:text-gray-300 mb-1">
+                        Education Board
+                      </label>
+                      <select
+                        value={formData.qualifications?.[1]?.board || ''}
+                        onChange={(e) => handleQualificationChange(1, 'board', e.target.value)}
+                        className="japandi-input w-full py-2 px-2.5 text-xs bg-white dark:bg-[#1f1e1a]"
+                      >
+                        <option value="">Select Board</option>
+                        {BANGLADESH_EDUCATION_BOARDS.map((board) => (
+                          <option key={board} value={board}>
+                            {board}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
